@@ -1335,10 +1335,48 @@ const CRM = () => {
                                 onChange={(e) => setHeroImageUrl(e.target.value)}
                                 className="flex-1"
                               />
-                              <Button variant="outline" className="flex items-center gap-2">
+                              <Button variant="outline" className="flex items-center gap-2" onClick={() => document.getElementById('imageUpload')?.click()}>
                                 <Image className="h-4 w-4" />
-                                Visualizar
+                                Selecionar Imagem
                               </Button>
+                              <input
+                                id="imageUpload"
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      if (event.target?.result) {
+                                        const imageUrl = event.target.result.toString();
+                                        setHeroImageUrl(imageUrl);
+                                        
+                                        // Save to landingPageSettings localStorage
+                                        const currentSettings = localStorage.getItem('landingPageSettings');
+                                        const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
+                                        
+                                        // Update the settings with the new image URL
+                                        const updatedSettings = {
+                                          ...parsedSettings,
+                                          heroImageUrl: imageUrl
+                                        };
+                                        
+                                        // Save the updated settings
+                                        localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
+                                        
+                                        // Show success toast
+                                        toast({
+                                          title: "Imagem Atualizada",
+                                          description: "A imagem foi atualizada e salva com sucesso"
+                                        });
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
                             </div>
                             <div className="mt-2 bg-gray-100 p-2 rounded text-center">
                               <img 
