@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
@@ -13,6 +13,28 @@ const Navbar = () => {
   const [password, setPassword] = useState('');
   const [user, setUser] = useState<string | null>(null);
   const { toast } = useToast();
+  
+  // Header customization settings
+  const [headerHeight, setHeaderHeight] = useState<number>(80);
+  const [logoUrl, setLogoUrl] = useState<string>('');
+  const [logoWidth, setLogoWidth] = useState<number>(120);
+  const [logoHorizontalOffset, setLogoHorizontalOffset] = useState<number>(0);
+  
+  // Load header settings from localStorage
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('landingPageSettings');
+    if (savedSettings) {
+      try {
+        const parsedSettings = JSON.parse(savedSettings);
+        if (parsedSettings.headerHeight) setHeaderHeight(parsedSettings.headerHeight);
+        if (parsedSettings.logoUrl) setLogoUrl(parsedSettings.logoUrl);
+        if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
+        if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
+      } catch (error) {
+        console.error('Error parsing header settings:', error);
+      }
+    }
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,9 +66,27 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="flex justify-between items-center py-6">
+    <nav className="flex justify-between items-center" style={{ height: `${headerHeight}px` }}>
       <div className="flex items-center gap-8">
-        <div className="text-pet-orange font-bold text-2xl">PETISS</div>
+        {logoUrl ? (
+          <div style={{ marginLeft: `${logoHorizontalOffset}px` }}>
+            <img 
+              src={logoUrl} 
+              alt="PETISS Logo" 
+              className="object-contain"
+              style={{ width: `${logoWidth}px`, height: 'auto' }}
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+                const fallbackElement = document.createElement('div');
+                fallbackElement.className = 'text-pet-orange font-bold text-2xl';
+                fallbackElement.innerText = 'PETISS';
+                e.currentTarget.parentNode?.appendChild(fallbackElement);
+              }}
+            />
+          </div>
+        ) : (
+          <div className="text-pet-orange font-bold text-2xl">PETISS</div>
+        )}
         
         <Dialog>
           <DialogTrigger asChild>

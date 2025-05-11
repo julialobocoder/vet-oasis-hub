@@ -124,6 +124,12 @@ const CRM = () => {
     { value: "7+", label: "Anos de Experiência", color: "purple" }
   ]);
   
+  // Header customization settings
+  const [headerHeight, setHeaderHeight] = useState<number>(80);
+  const [logoUrl, setLogoUrl] = useState<string>("");
+  const [logoWidth, setLogoWidth] = useState<number>(120);
+  const [logoHorizontalOffset, setLogoHorizontalOffset] = useState<number>(0);
+  
   // Forms
   const clientForm = useForm({
     defaultValues: {
@@ -219,7 +225,12 @@ const CRM = () => {
       aboutDescription1,
       aboutDescription2,
       services,
-      stats
+      stats,
+      // Header customization settings
+      headerHeight,
+      logoUrl,
+      logoWidth,
+      logoHorizontalOffset
     };
     
     localStorage.setItem('landingPageSettings', JSON.stringify(landingPageSettings));
@@ -244,6 +255,12 @@ const CRM = () => {
       setAboutDescription2(parsedSettings.aboutDescription2 || aboutDescription2);
       setServices(parsedSettings.services || services);
       setStats(parsedSettings.stats || stats);
+      
+      // Load header customization settings
+      if (parsedSettings.headerHeight) setHeaderHeight(parsedSettings.headerHeight);
+      if (parsedSettings.logoUrl) setLogoUrl(parsedSettings.logoUrl);
+      if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
+      if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
     }
   }, []);
 
@@ -1498,6 +1515,125 @@ const CRM = () => {
                                 className="mt-1"
                                 rows={4}
                               />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Header Customization Settings */}
+                      <div>
+                        <h3 className="text-lg font-medium mb-3">Cabeçalho</h3>
+                        <Separator className="mb-4" />
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium">Altura do Cabeçalho</label>
+                            <div className="flex items-center gap-2 mt-1">
+                              <input
+                                type="range"
+                                min="60"
+                                max="120"
+                                value={headerHeight}
+                                onChange={(e) => setHeaderHeight(parseInt(e.target.value))}
+                                className="flex-1"
+                              />
+                              <span className="text-sm text-gray-500 w-10 text-right">{headerHeight}px</span>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-medium">Logo</label>
+                            <div className="flex gap-2 mt-1">
+                              <Input 
+                                value={logoUrl} 
+                                onChange={(e) => setLogoUrl(e.target.value)}
+                                className="flex-1"
+                                placeholder="URL da imagem do logo"
+                              />
+                              <Button variant="outline" className="flex items-center gap-2" onClick={() => document.getElementById('logoUpload')?.click()}>
+                                <Image className="h-4 w-4" />
+                                Selecionar Logo
+                              </Button>
+                              <input
+                                id="logoUpload"
+                                type="file"
+                                accept="image/jpeg,image/png"
+                                className="hidden"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onload = (event) => {
+                                      if (event.target?.result) {
+                                        const imageUrl = event.target.result.toString();
+                                        setLogoUrl(imageUrl);
+                                        
+                                        // Save to landingPageSettings localStorage
+                                        const currentSettings = localStorage.getItem('landingPageSettings');
+                                        const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
+                                        
+                                        // Update the settings with the new logo URL
+                                        const updatedSettings = {
+                                          ...parsedSettings,
+                                          logoUrl: imageUrl
+                                        };
+                                        
+                                        // Save the updated settings
+                                        localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
+                                        
+                                        // Show success toast
+                                        toast({
+                                          title: "Logo Atualizado",
+                                          description: "O logo foi atualizado e salvo com sucesso"
+                                        });
+                                      }
+                                    };
+                                    reader.readAsDataURL(file);
+                                  }
+                                }}
+                              />
+                            </div>
+                            
+                            {logoUrl && (
+                              <div className="mt-2 bg-gray-100 p-2 rounded text-center">
+                                <img 
+                                  src={logoUrl} 
+                                  alt="Logo Preview" 
+                                  className="max-h-16 rounded mx-auto"
+                                  onError={(e) => e.currentTarget.src = "https://via.placeholder.com/150?text=Logo+Inválido"}
+                                />
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="text-sm font-medium">Largura do Logo</label>
+                              <div className="flex items-center gap-2 mt-1">
+                                <input
+                                  type="range"
+                                  min="80"
+                                  max="200"
+                                  value={logoWidth}
+                                  onChange={(e) => setLogoWidth(parseInt(e.target.value))}
+                                  className="flex-1"
+                                />
+                                <span className="text-sm text-gray-500 w-10 text-right">{logoWidth}px</span>
+                              </div>
+                            </div>
+                            
+                            <div>
+                              <label className="text-sm font-medium">Deslocamento Horizontal</label>
+                              <div className="flex items-center gap-2 mt-1">
+                                <input
+                                  type="range"
+                                  min="-50"
+                                  max="50"
+                                  value={logoHorizontalOffset}
+                                  onChange={(e) => setLogoHorizontalOffset(parseInt(e.target.value))}
+                                  className="flex-1"
+                                />
+                                <span className="text-sm text-gray-500 w-10 text-right">{logoHorizontalOffset}px</span>
+                              </div>
                             </div>
                           </div>
                         </div>
