@@ -20,6 +20,15 @@ const Navbar = () => {
   const [logoWidth, setLogoWidth] = useState<number>(120);
   const [logoHorizontalOffset, setLogoHorizontalOffset] = useState<number>(0);
   
+  // Menu text customization
+  const [menuItems, setMenuItems] = useState([
+    { id: 'home', text: 'Home', link: '/' },
+    { id: 'about', text: 'Sobre', link: '/about' },
+    { id: 'services', text: 'Serviços', link: '/services' },
+    { id: 'price', text: 'Preços', link: '/price' },
+    { id: 'contact', text: 'Contato', link: '/contact' }
+  ]);
+  
   // Load header settings from localStorage
   useEffect(() => {
     const savedSettings = localStorage.getItem('landingPageSettings');
@@ -30,6 +39,9 @@ const Navbar = () => {
         if (parsedSettings.logoUrl) setLogoUrl(parsedSettings.logoUrl);
         if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
         if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
+        if (parsedSettings.menuItems && Array.isArray(parsedSettings.menuItems)) {
+          setMenuItems(parsedSettings.menuItems);
+        }
       } catch (error) {
         console.error('Error parsing header settings:', error);
       }
@@ -170,11 +182,9 @@ const Navbar = () => {
       </div>
       
       <div className="hidden md:flex gap-8">
-        <Link to="/" className="font-medium">Home</Link>
-        <Link to="/about" className="font-medium">About</Link>
-        <Link to="/services" className="font-medium">Services</Link>
-        <Link to="/price" className="font-medium">Price</Link>
-        <Link to="/contact" className="font-medium">Contact</Link>
+        {menuItems.map((item) => (
+          <Link key={item.id} to={item.link} className="font-medium">{item.text}</Link>
+        ))}
       </div>
     </nav>
   );

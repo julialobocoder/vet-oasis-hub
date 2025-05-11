@@ -100,28 +100,32 @@ const CRM = () => {
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
 
   // Landing page settings state
-  const [heroTitle, setHeroTitle] = useState("Podemos Oferecer Serviços de Qualidade para Pets");
-  const [heroDescription, setHeroDescription] = useState("Oferecemos os melhores cuidados para seus pets com nossos veterinários especialistas e equipe profissional. A saúde e felicidade do seu pet são nossa prioridade.");
+  const [heroTitle, setHeroTitle] = useState("Vet Oasis - Clínica Veterinária Premium em Lauro de Freitas");
+  const [heroDescription, setHeroDescription] = useState("Há mais de 12 anos oferecendo serviços de excelência em medicina veterinária, banho & tosa, hospedagem e day care para pets em Lauro de Freitas. Nossa equipe de veterinários especialistas e profissionais qualificados garantem o melhor cuidado para seu melhor amigo.");
   const [heroImageUrl, setHeroImageUrl] = useState("https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&q=80&w=500");
-  const [aboutTitle1, setAboutTitle1] = useState("Nosso Progresso");
-  const [aboutTitle2, setAboutTitle2] = useState("Oferecemos o Melhor Cuidado");
-  const [aboutDescription1, setAboutDescription1] = useState("Desde 2014, oferecemos serviços excepcionais de cuidados para pets com foco em qualidade e bem-estar do seu animal. Nossa equipe de profissionais está dedicada a dar aos seus pets o cuidado que eles merecem.");
-  const [aboutDescription2, setAboutDescription2] = useState("Entendemos que seus pets são membros da família, e os tratamos com o amor e respeito que merecem. Nossas instalações modernas e equipe experiente garantem o atendimento da mais alta qualidade.");
+  const [aboutTitle1, setAboutTitle1] = useState("Nossa História em Lauro de Freitas");
+  const [aboutTitle2, setAboutTitle2] = useState("Infraestrutura Completa e Moderna");
+  const [aboutDescription1, setAboutDescription1] = useState("Fundada em 2011 em Lauro de Freitas, a Vet Oasis nasceu do sonho da Dra. Mariana Santos de criar um espaço que combinasse excelência em medicina veterinária com serviços de bem-estar animal. Começamos como uma pequena clínica e hoje somos referência em toda a região metropolitana de Salvador, com uma equipe de 8 veterinários especialistas e mais de 20 profissionais dedicados ao cuidado do seu pet.");
+  const [aboutDescription2, setAboutDescription2] = useState("Nosso complexo de 1200m² em Lauro de Freitas conta com 5 consultórios, centro cirúrgico equipado com tecnologia de ponta, laboratório próprio, sala de exames de imagem (raio-x digital e ultrassom), área de internamento 24h, espaço de banho e tosa premium, e hotel pet com monitoramento por câmeras e área de lazer. Tudo pensado para oferecer o melhor atendimento para seu melhor amigo.");
   
   // Services data for settings
   const [services, setServices] = useState<Service[]>([
-    { title: "Creche para Pets", description: "Serviços profissionais de creche para seus pets enquanto você está ocupado com trabalho ou outros compromissos.", color: "orange", index: "01" },
-    { title: "Vacinação", description: "Serviços completos de vacinação para manter seus pets saudáveis e protegidos de várias doenças.", color: "blue", index: "02" },
-    { title: "Hospedagem para Pets", description: "Instalações confortáveis para seus pets quando você precisa viajar ou ficar longe de casa.", color: "green", index: "03" },
-    { title: "Serviço Veterinário", description: "Serviços veterinários completos incluindo check-ups, tratamentos, cirurgias e atendimento de emergência.", color: "purple", index: "04" }
+    { title: "Banho & Tosa Premium", description: "Serviços de banho e tosa com produtos premium, perfumação especial e hidratação profunda para seu pet em Lauro de Freitas.", color: "orange", index: "01" },
+    { title: "Vacinação Completa", description: "Programa completo de vacinação para cães e gatos com vacinas importadas e certificado internacional, disponível em nossa clínica em Lauro de Freitas.", color: "blue", index: "02" },
+    { title: "Hospedagem Pet Resort", description: "Hospedagem de luxo com monitoramento 24h, área de lazer, alimentação premium e passeios diários para seu pet se sentir em casa enquanto você viaja.", color: "green", index: "03" },
+    { title: "Clínica Veterinária 24h", description: "Atendimento veterinário completo com equipamentos de última geração, laboratório próprio, cirurgias, exames de imagem e pronto-socorro 24h em Lauro de Freitas.", color: "purple", index: "04" },
+    { title: "Day Care Pet", description: "Creche diária com atividades recreativas, socialização, treinamento básico e alimentação balanceada para seu pet enquanto você trabalha.", color: "orange", index: "05" },
+    { title: "Transporte Pet", description: "Serviço de busca e entrega do seu pet em casa com veículos climatizados e adaptados para o conforto e segurança do seu animal em toda região de Lauro de Freitas.", color: "blue", index: "06" }
   ]);
   
   // Stats data for settings
   const [stats, setStats] = useState<Stat[]>([
-    { value: "24/7", label: "Atendimento ao Cliente", color: "orange" },
-    { value: "4.9", label: "Avaliação", color: "blue" },
-    { value: "30k", label: "Clientes", color: "green" },
-    { value: "7+", label: "Anos de Experiência", color: "purple" }
+    { value: "24/7", label: "Atendimento Veterinário", color: "orange" },
+    { value: "4.9", label: "Avaliação no Google", color: "blue" },
+    { value: "5000+", label: "Pets Atendidos", color: "green" },
+    { value: "12+", label: "Anos em Lauro de Freitas", color: "purple" },
+    { value: "8", label: "Veterinários Especialistas", color: "orange" },
+    { value: "98%", label: "Satisfação dos Clientes", color: "blue" }
   ]);
   
   // Header customization settings
@@ -129,6 +133,18 @@ const CRM = () => {
   const [logoUrl, setLogoUrl] = useState<string>("");
   const [logoWidth, setLogoWidth] = useState<number>(120);
   const [logoHorizontalOffset, setLogoHorizontalOffset] = useState<number>(0);
+  
+  // Menu items customization
+  const [menuItems, setMenuItems] = useState([
+    { id: 'home', text: 'Início', link: '/' },
+    { id: 'about', text: 'Quem Somos', link: '/about' },
+    { id: 'services', text: 'Serviços', link: '/services' },
+    { id: 'banho-tosa', text: 'Banho & Tosa', link: '/banho-tosa' },
+    { id: 'hospedagem', text: 'Hospedagem', link: '/hospedagem' },
+    { id: 'price', text: 'Valores', link: '/price' },
+    { id: 'contact', text: 'Contato', link: '/contact' },
+    { id: 'location', text: 'Lauro de Freitas', link: '/location' }
+  ]);
   
   // Forms
   const clientForm = useForm({
@@ -230,7 +246,8 @@ const CRM = () => {
       headerHeight,
       logoUrl,
       logoWidth,
-      logoHorizontalOffset
+      logoHorizontalOffset,
+      menuItems
     };
     
     localStorage.setItem('landingPageSettings', JSON.stringify(landingPageSettings));
@@ -261,6 +278,9 @@ const CRM = () => {
       if (parsedSettings.logoUrl) setLogoUrl(parsedSettings.logoUrl);
       if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
       if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
+      if (parsedSettings.menuItems && Array.isArray(parsedSettings.menuItems)) {
+        setMenuItems(parsedSettings.menuItems);
+      }
     }
   }, []);
 
@@ -282,6 +302,13 @@ const CRM = () => {
       updatedStats[index] = { ...updatedStats[index], [field]: value };
     }
     setStats(updatedStats);
+  };
+  
+  // Function to update menu items
+  const handleUpdateMenuItem = (index: number, field: 'text' | 'link', value: string) => {
+    const updatedMenuItems = [...menuItems];
+    updatedMenuItems[index] = { ...updatedMenuItems[index], [field]: value };
+    setMenuItems(updatedMenuItems);
   };
   
   // Client handling functions
@@ -1634,6 +1661,36 @@ const CRM = () => {
                                 />
                                 <span className="text-sm text-gray-500 w-10 text-right">{logoHorizontalOffset}px</span>
                               </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="text-sm font-medium">Menu de Navegação</label>
+                            <div className="space-y-2 mt-2">
+                              {menuItems.map((item, idx) => (
+                                <Card key={idx} className="bg-gray-50">
+                                  <CardContent className="pt-4 pb-4">
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <div>
+                                        <label className="text-xs text-gray-500">Texto do Menu</label>
+                                        <Input 
+                                          value={item.text} 
+                                          onChange={(e) => handleUpdateMenuItem(idx, 'text', e.target.value)}
+                                          className="mt-1"
+                                        />
+                                      </div>
+                                      <div>
+                                        <label className="text-xs text-gray-500">Link</label>
+                                        <Input 
+                                          value={item.link} 
+                                          onChange={(e) => handleUpdateMenuItem(idx, 'link', e.target.value)}
+                                          className="mt-1"
+                                        />
+                                      </div>
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              ))}
                             </div>
                           </div>
                         </div>
