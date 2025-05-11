@@ -6,6 +6,22 @@ import ServiceCard from '@/components/ServiceCard';
 import StatsCard from '@/components/StatsCard';
 import { Play } from 'lucide-react';
 
+// Definindo tipos para garantir que as cores sejam apenas as permitidas
+type ServiceColor = "orange" | "blue" | "green" | "purple";
+
+interface Service {
+  title: string;
+  description: string;
+  color: ServiceColor;
+  index: string;
+}
+
+interface Stat {
+  value: string;
+  label: string;
+  color: ServiceColor;
+}
+
 const Index = () => {
   // Default values
   const defaultHeroTitle = "Podemos Oferecer Serviços de Qualidade para Pets";
@@ -18,14 +34,14 @@ const Index = () => {
   const defaultAboutSubtitle2 = "melhor serviço de cuidados desde 2014";
   const defaultAboutDescription2 = "Entendemos que seus pets são membros da família, e os tratamos com o amor e respeito que merecem. Nossas instalações modernas e equipe experiente garantem o atendimento da mais alta qualidade.";
   
-  const defaultServices = [
+  const defaultServices: Service[] = [
     { title: "Creche para Pets", description: "Serviços profissionais de creche para seus pets enquanto você está ocupado com trabalho ou outros compromissos.", color: "orange", index: "01" },
     { title: "Vacinação", description: "Serviços completos de vacinação para manter seus pets saudáveis e protegidos de várias doenças.", color: "blue", index: "02" },
     { title: "Hospedagem para Pets", description: "Instalações confortáveis para seus pets quando você precisa viajar ou ficar longe de casa.", color: "green", index: "03" },
     { title: "Serviço Veterinário", description: "Serviços veterinários completos incluindo check-ups, tratamentos, cirurgias e atendimento de emergência.", color: "purple", index: "04" }
   ];
   
-  const defaultStats = [
+  const defaultStats: Stat[] = [
     { value: "24/7", label: "Atendimento ao Cliente", color: "orange" },
     { value: "4.9", label: "Avaliação", color: "blue" },
     { value: "30k", label: "Clientes", color: "green" },
@@ -42,8 +58,8 @@ const Index = () => {
   const [aboutTitle2, setAboutTitle2] = useState(defaultAboutTitle2);
   const [aboutSubtitle2, setAboutSubtitle2] = useState(defaultAboutSubtitle2);
   const [aboutDescription2, setAboutDescription2] = useState(defaultAboutDescription2);
-  const [services, setServices] = useState(defaultServices);
-  const [stats, setStats] = useState(defaultStats);
+  const [services, setServices] = useState<Service[]>(defaultServices);
+  const [stats, setStats] = useState<Stat[]>(defaultStats);
   
   // Load settings from localStorage
   useEffect(() => {
@@ -63,11 +79,35 @@ const Index = () => {
         setAboutDescription2(parsedSettings.aboutDescription2 || defaultAboutDescription2);
         
         if (parsedSettings.services && Array.isArray(parsedSettings.services)) {
-          setServices(parsedSettings.services);
+          // Garantir que as cores sejam válidas
+          const safeServices: Service[] = parsedSettings.services.map((service: any) => {
+            let safeColor: ServiceColor = "orange";
+            if (service.color === "orange" || service.color === "blue" || 
+                service.color === "green" || service.color === "purple") {
+              safeColor = service.color as ServiceColor;
+            }
+            return {
+              ...service,
+              color: safeColor
+            };
+          });
+          setServices(safeServices);
         }
         
         if (parsedSettings.stats && Array.isArray(parsedSettings.stats)) {
-          setStats(parsedSettings.stats);
+          // Garantir que as cores sejam válidas
+          const safeStats: Stat[] = parsedSettings.stats.map((stat: any) => {
+            let safeColor: ServiceColor = "orange";
+            if (stat.color === "orange" || stat.color === "blue" || 
+                stat.color === "green" || stat.color === "purple") {
+              safeColor = stat.color as ServiceColor;
+            }
+            return {
+              ...stat,
+              color: safeColor
+            };
+          });
+          setStats(safeStats);
         }
       } catch (error) {
         console.error("Error parsing settings:", error);
