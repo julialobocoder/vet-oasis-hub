@@ -496,10 +496,54 @@ const CRM = () => {
   
   // Appointment handling functions
   const handleScheduleAppointment = (data: any) => {
-    const formattedDate = appointmentDate 
-      ? format(appointmentDate, "dd 'de' MMM", { locale: pt }) 
-      : "Data não selecionada";
+    // Verificar se a data foi selecionada
+    if (!appointmentDate) {
+      toast({
+        title: "Erro no Agendamento",
+        description: "Por favor, selecione uma data para a consulta",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Verificar se o horário foi selecionado
+    if (!data.time) {
+      toast({
+        title: "Erro no Agendamento",
+        description: "Por favor, selecione um horário para a consulta",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Verificar se o serviço foi selecionado
+    if (!data.service) {
+      toast({
+        title: "Erro no Agendamento",
+        description: "Por favor, selecione um serviço para a consulta",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Formatar a data para exibição
+    const formattedDate = format(appointmentDate, "dd 'de' MMM", { locale: pt });
       
+    // Verificar se já existe uma consulta no mesmo horário
+    const conflictingAppointment = appointments.find(
+      app => app.date === `${formattedDate}, ${data.time}` && app.status !== "cancelled"
+    );
+    
+    if (conflictingAppointment) {
+      toast({
+        title: "Horário Indisponível",
+        description: `Já existe uma consulta agendada para ${formattedDate} às ${data.time}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Criar a nova consulta
     const newAppointment: Appointment = {
       id: appointments.length + 1,
       petName: data.petName,
@@ -510,13 +554,72 @@ const CRM = () => {
       status: "pending"
     };
     
+    // Adicionar a nova consulta à lista
     setAppointments([...appointments, newAppointment]);
+    
+    // Verificar se o cliente já existe e atualizar o número de visitas
+    const existingClient = clients.find(
+      client => client.petName.toLowerCase() === data.petName.toLowerCase() && 
+               client.ownerName.toLowerCase() === data.ownerName.toLowerCase()
+    );
+    
+    if (existingClient) {
+      // Atualizar o cliente existente
+      const updatedClients = clients.map(client => {
+        if (client.id === existingClient.id) {
+          return {
+            ...client,
+            visits: client.visits + 1,
+            lastVisit: format(new Date(), 'dd/MM/yyyy')
+          };
+        }
+        return client;
+      });
+      
+      setClients(updatedClients);
+    } else {
+      // Se o cliente não existir, perguntar se deseja cadastrá-lo
+      toast({
+        title: "Novo Cliente",
+        description: `${data.petName} não está cadastrado. Deseja adicionar aos clientes?`,
+        action: (
+          <Button 
+            onClick={() => {
+              // Adicionar novo cliente
+              const newClient: Client = {
+                id: clients.length + 1,
+                petName: data.petName,
+                petType: data.petType,
+                ownerName: data.ownerName,
+                joinDate: format(new Date(), 'MMM yyyy', { locale: pt }),
+                visits: 1,
+                lastVisit: format(new Date(), 'dd/MM/yyyy')
+              };
+              
+              setClients([...clients, newClient]);
+              
+              toast({
+                title: "Cliente Adicionado",
+                description: `${data.petName} foi adicionado à lista de clientes`
+              });
+            }}
+            variant="outline"
+            size="sm"
+          >
+            Adicionar
+          </Button>
+        )
+      });
+    }
+    
+    // Fechar o diálogo e resetar o formulário
     setShowAppointmentDialog(false);
     appointmentForm.reset();
     
+    // Mostrar mensagem de sucesso
     toast({
       title: "Consulta Agendada",
-      description: `Consulta para ${data.petName} foi agendada com sucesso`,
+      description: `Consulta para ${data.petName} foi agendada com sucesso para ${formattedDate} às ${data.time}`,
     });
   };
   
@@ -1915,6 +2018,150 @@ const CRM = () => {
           </div>
         </div>
       </div>
+      
+      {/* Diu00e1logo de Agendamento de Consulta */}
+      <Dialog open={showAppointmentDialog} onOpenChange={setShowAppointmentDialog}>
+        <DialogContent className="sm:max-w-[550px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <span className="text-lg">Agendar Nova Consulta</span>
+              <Button 
+                variant="ghost" 
+                className="ml-auto h-8 w-8 p-0" 
+                onClick={() => setShowAppointmentDialog(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={appointmentForm.handleSubmit(handleScheduleAppointment)}>
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <FormLabel>Nome do Pet</FormLabel>
+                  <Input 
+                    {...appointmentForm.register("petName")} 
+                    placeholder="Ex: Max"
+                    required
+                  />
+                </div>
+                <div className="space-y-1">
+                  <FormLabel>Tipo de Pet</FormLabel>
+                  <Input 
+                    {...appointmentForm.register("petType")} 
+                    placeholder="Ex: Cachorro, Gato, etc."
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <FormLabel>Nome do Dono</FormLabel>
+                <Input 
+                  {...appointmentForm.register("ownerName")} 
+                  placeholder="Nome completo do dono"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <FormLabel>Serviço</FormLabel>
+                <Select 
+                  onValueChange={(value) => appointmentForm.setValue("service", value)}
+                  defaultValue={appointmentForm.getValues("service")}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o serviço" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Consulta Geral">Consulta Geral</SelectItem>
+                    <SelectItem value="Vacinação">Vacinação</SelectItem>
+                    <SelectItem value="Banho e Tosa">Banho e Tosa</SelectItem>
+                    <SelectItem value="Exames">Exames</SelectItem>
+                    <SelectItem value="Cirurgia">Cirurgia</SelectItem>
+                    <SelectItem value="Castração">Castração</SelectItem>
+                    <SelectItem value="Limpeza Dental">Limpeza Dental</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <FormLabel>Data</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className="w-full justify-start text-left font-normal"
+                      >
+                        <CalendarDays className="mr-2 h-4 w-4" />
+                        {appointmentDate ? format(appointmentDate, "PPP", { locale: pt }) : "Selecione uma data"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={appointmentDate}
+                        onSelect={setAppointmentDate}
+                        initialFocus
+                        locale={pt}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div className="space-y-1">
+                  <FormLabel>Horário</FormLabel>
+                  <Select 
+                    onValueChange={(value) => appointmentForm.setValue("time", value)}
+                    defaultValue={appointmentForm.getValues("time")}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o horário" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="08:00">08:00</SelectItem>
+                      <SelectItem value="09:00">09:00</SelectItem>
+                      <SelectItem value="10:00">10:00</SelectItem>
+                      <SelectItem value="11:00">11:00</SelectItem>
+                      <SelectItem value="13:00">13:00</SelectItem>
+                      <SelectItem value="14:00">14:00</SelectItem>
+                      <SelectItem value="15:00">15:00</SelectItem>
+                      <SelectItem value="16:00">16:00</SelectItem>
+                      <SelectItem value="17:00">17:00</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-1">
+                <FormLabel>Observações</FormLabel>
+                <Textarea 
+                  {...appointmentForm.register("notes")} 
+                  placeholder="Observações adicionais sobre a consulta"
+                  rows={3}
+                />
+              </div>
+            </div>
+            
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                type="button" 
+                onClick={() => setShowAppointmentDialog(false)}
+              >
+                Cancelar
+              </Button>
+              <Button type="submit" className="bg-pet-blue hover:bg-pet-blue/90">
+                Agendar Consulta
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
