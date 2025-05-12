@@ -812,7 +812,23 @@ const CRM = () => {
                           <Button 
                             size="sm" 
                             className="flex gap-1 bg-pet-blue hover:bg-pet-blue/90"
-                            onClick={() => setShowAppointmentDialog(true)}
+                            onClick={() => {
+                              // Resetar o formulário antes de abrir o diálogo
+                              appointmentForm.reset({
+                                petName: "",
+                                petType: "",
+                                ownerName: "",
+                                service: "",
+                                time: "",
+                                notes: ""
+                              });
+                              
+                              // Definir a data atual como data padrão
+                              setAppointmentDate(new Date());
+                              
+                              // Abrir o diálogo de agendamento
+                              setShowAppointmentDialog(true);
+                            }}
                           >
                             <PlusCircle className="h-4 w-4" />
                             Nova Consulta
