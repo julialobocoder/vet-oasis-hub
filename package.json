@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "setup-hooks": "node ./scripts/setup-git-hooks.mjs",
+    "export-images": "node ./scripts/export-images.mjs",
+    "postinstall": "npm run setup-hooks"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

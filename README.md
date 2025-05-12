@@ -1,8 +1,24 @@
-# Welcome to your Lovable project
+# Vet Oasis Hub
 
-## Project info
+## Informações do Projeto
 
 **URL**: https://lovable.dev/projects/069b8008-c4f6-4dcb-9166-6868ca26a9e8
+
+## Sistema de Persistência de Imagens
+
+Este projeto inclui um sistema de persistência de imagens que garante que a logo e a imagem do hero sejam salvas permanentemente no repositório após um commit e push. Isso significa que as imagens configuradas na aba CRM serão mantidas mesmo após clonar o repositório em outro ambiente.
+
+### Como funciona
+
+1. Quando você configura imagens na aba CRM e salva as configurações, as imagens são armazenadas no IndexedDB do navegador.
+2. Após salvar as configurações, execute o comando `npm run export-images` para exportar as imagens do IndexedDB para a pasta `public/assets/images/` do projeto.
+3. Quando você faz um commit e push, as imagens exportadas são incluídas no repositório.
+4. Quando o projeto é iniciado, ele verifica se existem imagens na pasta `public/assets/images/` e as utiliza em vez das imagens do IndexedDB.
+
+### Comandos Úteis
+
+- `npm run export-images`: Exporta as imagens do IndexedDB para a pasta `public/assets/images/`.
+- `npm run setup-hooks`: Configura os Git Hooks para exportar automaticamente as imagens antes de cada commit.
 
 ## How can I edit this code?
 

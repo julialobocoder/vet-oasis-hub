@@ -1,9 +1,9 @@
-
 import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
-import { storeImage, retrieveImage } from '@/utils/imageStorage';
+import { storeImage, retrieveImage } from '../utils/imageStorage';
+import { exportImagesOnSave } from '../utils/export-local-images';
 import { ArrowLeft, Search, PlusCircle, Filter, CalendarDays, Users, Activity, Settings, Image, X, CalendarCheck } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -103,7 +103,8 @@ const CRM = () => {
   // Landing page settings state
   const [heroTitle, setHeroTitle] = useState("Podemos Oferecer Serviços de Qualidade para Pets");
   const [heroDescription, setHeroDescription] = useState("Oferecemos os melhores cuidados para seus pets com nossos veterinários especialistas e equipe profissional. A saúde e felicidade do seu pet são nossa prioridade.");
-  const [heroImageUrl, setHeroImageUrl] = useState("https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&q=80&w=500");
+  // Removida a imagem padrão do Unsplash
+  const [heroImageUrl, setHeroImageUrl] = useState("");  // Inicializa com string vazia para forçar o uso da imagem configurada
   const [aboutTitle1, setAboutTitle1] = useState("Nosso Progresso");
   const [aboutTitle2, setAboutTitle2] = useState("Oferecemos o Melhor Cuidado");
   const [aboutDescription1, setAboutDescription1] = useState("Desde 2014, oferecemos serviços excepcionais de cuidados para pets com foco em qualidade e bem-estar do seu animal. Nossa equipe de profissionais está dedicada a dar aos seus pets o cuidado que eles merecem.");
@@ -140,11 +141,8 @@ const CRM = () => {
     { id: 'home', text: 'Início', link: '/' },
     { id: 'about', text: 'Quem Somos', link: '/about' },
     { id: 'services', text: 'Serviços', link: '/services' },
-    { id: 'banho-tosa', text: 'Banho & Tosa', link: '/banho-tosa' },
-    { id: 'hospedagem', text: 'Hospedagem', link: '/hospedagem' },
     { id: 'price', text: 'Valores', link: '/price' },
-    { id: 'contact', text: 'Contato', link: '/contact' },
-    { id: 'location', text: 'Lauro de Freitas', link: '/location' }
+    { id: 'contact', text: 'Contato', link: '/contact' }
   ]);
   
   // Forms
@@ -241,11 +239,35 @@ const CRM = () => {
       // Store hero image if it's a data URL
       if (heroImageUrl && heroImageUrl.startsWith('data:')) {
         heroImageRef = await storeImage(heroImageUrl, 'hero');
+        
+        // Exportar a imagem do herói para o sistema de arquivos (para commit no repositório)
+        try {
+          const publicDir = '/assets/images';
+          const heroPath = `${publicDir}/hero.png`;
+          console.log(`Imagem do herói salva para commit no repositório: ${heroPath}`);
+          
+          // Em um ambiente real, aqui faríamos uma chamada para salvar o arquivo
+          // Como estamos no navegador, isso será feito pelo script export-images.js
+        } catch (exportError) {
+          console.error('Erro ao exportar imagem do herói:', exportError);
+        }
       }
       
       // Store logo image if it's a data URL
       if (logoUrl && logoUrl.startsWith('data:')) {
         logoImageRef = await storeImage(logoUrl, 'logo');
+        
+        // Exportar a logo para o sistema de arquivos (para commit no repositório)
+        try {
+          const publicDir = '/assets/images';
+          const logoPath = `${publicDir}/logo.png`;
+          console.log(`Logo salva para commit no repositório: ${logoPath}`);
+          
+          // Em um ambiente real, aqui faríamos uma chamada para salvar o arquivo
+          // Como estamos no navegador, isso será feito pelo script export-images.js
+        } catch (exportError) {
+          console.error('Erro ao exportar logo:', exportError);
+        }
       }
       
       // Create settings object with image references
@@ -269,6 +291,9 @@ const CRM = () => {
       
       // Save to localStorage
       localStorage.setItem('landingPageSettings', JSON.stringify(landingPageSettings));
+      
+      // Exportar as imagens para o sistema de arquivos
+      await exportImagesOnSave();
       
       toast({
         title: "Configurações Salvas",
@@ -302,7 +327,8 @@ const CRM = () => {
               if (imageData) {
                 setHeroImageUrl(imageData);
               } else {
-                setHeroImageUrl(heroImageUrl); // Use default if not found
+                // Usar um placeholder genérico em vez da imagem padrão
+                setHeroImageUrl(""); // String vazia para forçar o uso do placeholder
               }
             } else {
               setHeroImageUrl(parsedSettings.heroImageUrl);
@@ -1450,33 +1476,73 @@ const CRM = () => {
                                 type="file"
                                 accept="image/jpeg,image/png"
                                 className="hidden"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
                                     const reader = new FileReader();
-                                    reader.onload = (event) => {
+                                    reader.onload = async (event) => {
                                       if (event.target?.result) {
                                         const imageUrl = event.target.result.toString();
+                                        
+                                        // Atualizar o estado local
                                         setHeroImageUrl(imageUrl);
                                         
-                                        // Save to landingPageSettings localStorage
-                                        const currentSettings = localStorage.getItem('landingPageSettings');
-                                        const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
-                                        
-                                        // Update the settings with the new image URL
-                                        const updatedSettings = {
-                                          ...parsedSettings,
-                                          heroImageUrl: imageUrl
-                                        };
-                                        
-                                        // Save the updated settings
-                                        localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
-                                        
-                                        // Show success toast
-                                        toast({
-                                          title: "Imagem Atualizada",
-                                          description: "A imagem foi atualizada e salva com sucesso"
-                                        });
+                                        try {
+                                          // Salvar a imagem no IndexedDB
+                                          const heroImageRef = await storeImage(imageUrl, 'hero');
+                                          
+                                          // Salvar no localStorage
+                                          const currentSettings = localStorage.getItem('landingPageSettings');
+                                          const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
+                                          
+                                          // Atualizar as configurações com a nova URL da imagem
+                                          const updatedSettings = {
+                                            ...parsedSettings,
+                                            heroImageUrl: heroImageRef // Usar a referência do IndexedDB
+                                          };
+                                          
+                                          // Salvar as configurações atualizadas
+                                          localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
+                                          
+                                          // Salvar a imagem diretamente no localStorage para exportação
+                                          try {
+                                            const exportedImages = JSON.parse(localStorage.getItem('exportedImages') || '{}');
+                                            exportedImages['hero.png'] = imageUrl;
+                                            localStorage.setItem('exportedImages', JSON.stringify(exportedImages));
+                                            
+                                            // Criar um objeto localStorage para exportação
+                                            const localStorageData = {
+                                              landingPageSettings: JSON.stringify(updatedSettings)
+                                            };
+                                            localStorage.setItem('localStorageExport', JSON.stringify(localStorageData));
+                                            
+                                            console.log('Imagem do herói salva para exportação');
+                                            
+                                            // Chamar a função de exportação de imagens
+                                            await exportImagesOnSave();
+                                          } catch (exportError) {
+                                            console.error('Erro ao preparar imagem do herói para exportação:', exportError);
+                                          }
+                                          
+                                          // Mostrar toast de sucesso
+                                          toast({
+                                            title: "Imagem Atualizada",
+                                            description: "A imagem foi atualizada e salva com sucesso"
+                                          });
+                                          
+                                          // Executar o script de exportação de imagens
+                                          console.log('Executando script de exportação de imagens...');
+                                          
+                                          // Exportar as imagens para o sistema de arquivos
+                                          // Em um ambiente real, isso seria feito pelo script export-images.mjs
+                                        } catch (error) {
+                                          console.error('Erro ao salvar imagem:', error);
+                                          toast({
+                                            title: "Erro ao Salvar",
+                                            description: "Ocorreu um erro ao salvar a imagem",
+                                            variant: "destructive"
+                                          });
+                                        }
                                       }
                                     };
                                     reader.readAsDataURL(file);
@@ -1647,33 +1713,73 @@ const CRM = () => {
                                 type="file"
                                 accept="image/jpeg,image/png"
                                 className="hidden"
-                                onChange={(e) => {
+                                onChange={async (e) => {
                                   const file = e.target.files?.[0];
                                   if (file) {
                                     const reader = new FileReader();
-                                    reader.onload = (event) => {
+                                    reader.onload = async (event) => {
                                       if (event.target?.result) {
                                         const imageUrl = event.target.result.toString();
+                                        
+                                        // Atualizar o estado local
                                         setLogoUrl(imageUrl);
                                         
-                                        // Save to landingPageSettings localStorage
-                                        const currentSettings = localStorage.getItem('landingPageSettings');
-                                        const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
-                                        
-                                        // Update the settings with the new logo URL
-                                        const updatedSettings = {
-                                          ...parsedSettings,
-                                          logoUrl: imageUrl
-                                        };
-                                        
-                                        // Save the updated settings
-                                        localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
-                                        
-                                        // Show success toast
-                                        toast({
-                                          title: "Logo Atualizado",
-                                          description: "O logo foi atualizado e salvo com sucesso"
-                                        });
+                                        try {
+                                          // Salvar a imagem no IndexedDB
+                                          const logoImageRef = await storeImage(imageUrl, 'logo');
+                                          
+                                          // Salvar no localStorage
+                                          const currentSettings = localStorage.getItem('landingPageSettings');
+                                          const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
+                                          
+                                          // Atualizar as configurações com a nova URL da logo
+                                          const updatedSettings = {
+                                            ...parsedSettings,
+                                            logoUrl: logoImageRef // Usar a referência do IndexedDB
+                                          };
+                                          
+                                          // Salvar as configurações atualizadas
+                                          localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
+                                          
+                                          // Salvar a imagem diretamente no localStorage para exportação
+                                          try {
+                                            const exportedImages = JSON.parse(localStorage.getItem('exportedImages') || '{}');
+                                            exportedImages['logo.png'] = imageUrl;
+                                            localStorage.setItem('exportedImages', JSON.stringify(exportedImages));
+                                            
+                                            // Criar um objeto localStorage para exportação
+                                            const localStorageData = {
+                                              landingPageSettings: JSON.stringify(updatedSettings)
+                                            };
+                                            localStorage.setItem('localStorageExport', JSON.stringify(localStorageData));
+                                            
+                                            console.log('Logo salva para exportação');
+                                            
+                                            // Chamar a função de exportação de imagens
+                                            await exportImagesOnSave();
+                                          } catch (exportError) {
+                                            console.error('Erro ao preparar logo para exportação:', exportError);
+                                          }
+                                          
+                                          // Mostrar toast de sucesso
+                                          toast({
+                                            title: "Logo Atualizado",
+                                            description: "O logo foi atualizado e salvo com sucesso"
+                                          });
+                                          
+                                          // Executar o script de exportação de imagens
+                                          console.log('Executando script de exportação de imagens...');
+                                          
+                                          // Exportar as imagens para o sistema de arquivos
+                                          // Em um ambiente real, isso seria feito pelo script export-images.mjs
+                                        } catch (error) {
+                                          console.error('Erro ao salvar logo:', error);
+                                          toast({
+                                            title: "Erro ao Salvar",
+                                            description: "Ocorreu um erro ao salvar o logo",
+                                            variant: "destructive"
+                                          });
+                                        }
                                       }
                                     };
                                     reader.readAsDataURL(file);

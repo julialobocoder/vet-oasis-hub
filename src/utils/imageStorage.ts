@@ -32,18 +32,46 @@ export const storeImage = async (imageData: string, type: string): Promise<strin
  * @returns A promise that resolves to the image data or null if not found
  */
 export const retrieveImage = async (imageRef: string): Promise<string | null> => {
-  if (!imageRef || !imageRef.startsWith('db-image://')) {
-    return imageRef; // Not a database reference, return as is
+  if (!imageRef) return null;
+  
+  // Se não for uma referência de banco de dados, retornar como está
+  if (!imageRef.startsWith('db-image://')) {
+    return imageRef;
   }
   
   try {
-    // Extract the image ID from the reference
+    // Extrair o ID da imagem da referência
     const imageId = imageRef.replace('db-image://', '');
+    const imageType = imageId.split('_')[0]; // 'logo' ou 'hero'
     
-    // Load the image from IndexedDB
-    return await loadImage(imageId);
+    // Carregar a imagem do IndexedDB
+    const imageFromDB = await loadImage(imageId);
+    
+    if (imageFromDB) {
+      console.log(`Imagem ${imageType} carregada com sucesso do IndexedDB`);
+      
+      // Exportar a imagem para o sistema de arquivos para persistência
+      try {
+        // Aqui você poderia chamar uma função para salvar a imagem no sistema de arquivos
+        // Mas como estamos no navegador, não temos acesso direto ao sistema de arquivos
+        // Então vamos salvar em localStorage para que o script de exportação possa usá-la
+        const exportedImages = JSON.parse(localStorage.getItem('exportedImages') || '{}');
+        exportedImages[`${imageType}.png`] = imageFromDB;
+        localStorage.setItem('exportedImages', JSON.stringify(exportedImages));
+        console.log(`Imagem ${imageType} salva para exportação`);
+      } catch (exportError) {
+        console.error(`Erro ao preparar imagem ${imageType} para exportação:`, exportError);
+      }
+      
+      return imageFromDB;
+    } else {
+      // Se não encontrar no IndexedDB, tentar carregar do sistema de arquivos
+      console.log(`Imagem ${imageType} não encontrada no IndexedDB, tentando sistema de arquivos`);
+      const timestamp = Date.now();
+      return `/assets/images/${imageType}.png?t=${timestamp}`;
+    }
   } catch (error) {
-    console.error('Failed to retrieve image:', error);
+    console.error('Falha ao recuperar imagem:', error);
     return null;
   }
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from './ui/button';
@@ -50,17 +49,18 @@ const Navbar = () => {
           
           // Handle logo URL - check if it's a database reference
           if (parsedSettings.logoUrl) {
-            if (parsedSettings.logoUrl.startsWith('db-image://')) {
-              // Load from database
-              const logoData = await retrieveImage(parsedSettings.logoUrl);
-              if (logoData) {
-                setLogoUrl(logoData);
-              } else {
-                console.warn('Logo image not found in database');
-              }
+            console.log('Tentando carregar logo:', parsedSettings.logoUrl);
+            
+            // Usar a função retrieveImage para processar a URL da logo
+            const processedLogoUrl = await retrieveImage(parsedSettings.logoUrl);
+            if (processedLogoUrl) {
+              console.log('Logo processada com sucesso:', processedLogoUrl);
+              setLogoUrl(processedLogoUrl);
             } else {
-              // Regular URL
-              setLogoUrl(parsedSettings.logoUrl);
+              console.error('Falha ao processar logo, tentando usar logo padrão');
+              // Usar logo padrão do sistema de arquivos
+              const timestamp = Date.now();
+              setLogoUrl(`/assets/images/logo.png?t=${timestamp}`);
             }
           }
           
@@ -117,12 +117,47 @@ const Navbar = () => {
               alt="PETISS Logo" 
               className="object-contain"
               style={{ width: `${logoWidth}px`, height: 'auto' }}
+              key={`logo-image-${Date.now()}`} // Forçar re-render da imagem
               onError={(e) => {
-                e.currentTarget.style.display = 'none';
-                const fallbackElement = document.createElement('div');
-                fallbackElement.className = 'text-pet-orange font-bold text-2xl';
-                fallbackElement.innerText = 'PETISS';
-                e.currentTarget.parentNode?.appendChild(fallbackElement);
+                console.log('Erro ao carregar logo:', logoUrl);
+                
+                // Tentar carregar a logo do sistema de arquivos diretamente
+                const timestamp = Date.now();
+                const publicLogoUrl = `/assets/images/logo.png?t=${timestamp}`;
+                console.log('Tentando carregar logo do sistema de arquivos:', publicLogoUrl);
+                
+                // Verificar se a logo já está usando o caminho do sistema de arquivos
+                if (logoUrl.includes('/assets/images/logo.png')) {
+                  console.log('Já está usando logo do sistema de arquivos, mostrando fallback');
+                  // Já está tentando usar a logo do sistema de arquivos, mostrar fallback
+                  e.currentTarget.style.display = 'none';
+                  
+                  // Criar e adicionar o fallback
+                  const container = e.currentTarget.parentElement;
+                  if (container) {
+                    const fallbackElement = document.createElement('div');
+                    fallbackElement.className = 'text-pet-orange font-bold text-2xl';
+                    fallbackElement.innerText = 'PETISS';
+                    container.appendChild(fallbackElement);
+                  }
+                } else {
+                  // Tentar carregar do sistema de arquivos
+                  e.currentTarget.src = publicLogoUrl;
+                  
+                  // Se falhar novamente, mostrar fallback
+                  e.currentTarget.onerror = () => {
+                    console.log('Falha ao carregar logo do sistema de arquivos');
+                    e.currentTarget.style.display = 'none';
+                    
+                    const container = e.currentTarget.parentElement;
+                    if (container) {
+                      const fallbackElement = document.createElement('div');
+                      fallbackElement.className = 'text-pet-orange font-bold text-2xl';
+                      fallbackElement.innerText = 'PETISS';
+                      container.appendChild(fallbackElement);
+                    }
+                  };
+                }
               }}
             />
           </div>
