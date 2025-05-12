@@ -15,6 +15,7 @@ import React, { useEffect, Suspense } from "react";
 import { initDB } from "./services/db";
 import { checkImageExists } from './utils/exportImages';
 import { loadImage } from './services/db';
+import ImageManager from './components/ImageManager';
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <ImageManager />
         <Toaster />
         <Sonner />
         <Routes>
