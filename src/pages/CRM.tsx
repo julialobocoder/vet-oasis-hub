@@ -23,6 +23,7 @@ import { pt } from 'date-fns/locale';
 import { 
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -164,11 +165,25 @@ const CRM = () => {
       petType: '',
       ownerName: '',
       service: '',
-      date: new Date(),
       time: '',
       notes: ''
     }
   });
+
+  // Efeito para limpar o formulário quando o diálogo é fechado
+  useEffect(() => {
+    if (!showAppointmentDialog) {
+      // Resetar o formulário quando o diálogo é fechado
+      appointmentForm.reset({
+        petName: "",
+        petType: "",
+        ownerName: "",
+        service: "",
+        time: "",
+        notes: ""
+      }, { keepDefaultValues: true });
+    }
+  }, [showAppointmentDialog, appointmentForm]);
 
   const staffForm = useForm({
     defaultValues: {
@@ -821,7 +836,7 @@ const CRM = () => {
                                 service: "",
                                 time: "",
                                 notes: ""
-                              });
+                              }, { keepDefaultValues: true });
                               
                               // Definir a data atual como data padrão
                               setAppointmentDate(new Date());
@@ -927,9 +942,12 @@ const CRM = () => {
 
                 {/* Nova Consulta Dialog */}
                 <Dialog open={showAppointmentDialog} onOpenChange={setShowAppointmentDialog}>
-                  <DialogContent className="sm:max-w-[500px]">
+                  <DialogContent className="sm:max-w-[500px]" aria-describedby="appointment-dialog-description">
                     <DialogHeader>
                       <DialogTitle className="text-center">Agendar Nova Consulta</DialogTitle>
+                      <DialogDescription id="appointment-dialog-description" className="text-center">
+                        Preencha os dados abaixo para agendar uma nova consulta
+                      </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={appointmentForm.handleSubmit(handleScheduleAppointment)}>
                       <div className="grid gap-4 py-4">
