@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
+import { storeImage, retrieveImage } from '@/utils/imageStorage';
 import { ArrowLeft, Search, PlusCircle, Filter, CalendarDays, Users, Activity, Settings, Image, X, CalendarCheck } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
@@ -100,13 +101,13 @@ const CRM = () => {
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
 
   // Landing page settings state
-  const [heroTitle, setHeroTitle] = useState("Vet Oasis - Clínica Veterinária Premium em Lauro de Freitas");
-  const [heroDescription, setHeroDescription] = useState("Há mais de 12 anos oferecendo serviços de excelência em medicina veterinária, banho & tosa, hospedagem e day care para pets em Lauro de Freitas. Nossa equipe de veterinários especialistas e profissionais qualificados garantem o melhor cuidado para seu melhor amigo.");
+  const [heroTitle, setHeroTitle] = useState("Podemos Oferecer Serviços de Qualidade para Pets");
+  const [heroDescription, setHeroDescription] = useState("Oferecemos os melhores cuidados para seus pets com nossos veterinários especialistas e equipe profissional. A saúde e felicidade do seu pet são nossa prioridade.");
   const [heroImageUrl, setHeroImageUrl] = useState("https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&q=80&w=500");
-  const [aboutTitle1, setAboutTitle1] = useState("Nossa História em Lauro de Freitas");
-  const [aboutTitle2, setAboutTitle2] = useState("Infraestrutura Completa e Moderna");
-  const [aboutDescription1, setAboutDescription1] = useState("Fundada em 2011 em Lauro de Freitas, a Vet Oasis nasceu do sonho da Dra. Mariana Santos de criar um espaço que combinasse excelência em medicina veterinária com serviços de bem-estar animal. Começamos como uma pequena clínica e hoje somos referência em toda a região metropolitana de Salvador, com uma equipe de 8 veterinários especialistas e mais de 20 profissionais dedicados ao cuidado do seu pet.");
-  const [aboutDescription2, setAboutDescription2] = useState("Nosso complexo de 1200m² em Lauro de Freitas conta com 5 consultórios, centro cirúrgico equipado com tecnologia de ponta, laboratório próprio, sala de exames de imagem (raio-x digital e ultrassom), área de internamento 24h, espaço de banho e tosa premium, e hotel pet com monitoramento por câmeras e área de lazer. Tudo pensado para oferecer o melhor atendimento para seu melhor amigo.");
+  const [aboutTitle1, setAboutTitle1] = useState("Nosso Progresso");
+  const [aboutTitle2, setAboutTitle2] = useState("Oferecemos o Melhor Cuidado");
+  const [aboutDescription1, setAboutDescription1] = useState("Desde 2014, oferecemos serviços excepcionais de cuidados para pets com foco em qualidade e bem-estar do seu animal. Nossa equipe de profissionais está dedicada a dar aos seus pets o cuidado que eles merecem.");
+  const [aboutDescription2, setAboutDescription2] = useState("Entendemos que seus pets são membros da família, e os tratamos com o amor e respeito que merecem. Nossas instalações modernas e equipe experiente garantem o atendimento da mais alta qualidade.");
   
   // Services data for settings
   const [services, setServices] = useState<Service[]>([
@@ -230,58 +231,119 @@ const CRM = () => {
   const [showAddClientDialog, setShowAddClientDialog] = useState(false);
   const [showAddStaffDialog, setShowAddStaffDialog] = useState(false);
 
-  // Save settings to localStorage
-  const saveSettings = () => {
-    const landingPageSettings = {
-      heroTitle,
-      heroDescription,
-      heroImageUrl,
-      aboutTitle1,
-      aboutTitle2,
-      aboutDescription1,
-      aboutDescription2,
-      services,
-      stats,
-      // Header customization settings
-      headerHeight,
-      logoUrl,
-      logoWidth,
-      logoHorizontalOffset,
-      menuItems
-    };
-    
-    localStorage.setItem('landingPageSettings', JSON.stringify(landingPageSettings));
-    
-    toast({
-      title: "Configurações Salvas",
-      description: "As alterações foram salvas com sucesso",
-    });
+  // Save settings to localStorage and database
+  const saveSettings = async () => {
+    try {
+      // Store images in the database if they are data URLs
+      let heroImageRef = heroImageUrl;
+      let logoImageRef = logoUrl;
+      
+      // Store hero image if it's a data URL
+      if (heroImageUrl && heroImageUrl.startsWith('data:')) {
+        heroImageRef = await storeImage(heroImageUrl, 'hero');
+      }
+      
+      // Store logo image if it's a data URL
+      if (logoUrl && logoUrl.startsWith('data:')) {
+        logoImageRef = await storeImage(logoUrl, 'logo');
+      }
+      
+      // Create settings object with image references
+      const landingPageSettings = {
+        heroTitle,
+        heroDescription,
+        heroImageUrl: heroImageRef,
+        aboutTitle1,
+        aboutTitle2,
+        aboutDescription1,
+        aboutDescription2,
+        services,
+        stats,
+        // Header customization settings
+        headerHeight,
+        logoUrl: logoImageRef,
+        logoWidth,
+        logoHorizontalOffset,
+        menuItems
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('landingPageSettings', JSON.stringify(landingPageSettings));
+      
+      toast({
+        title: "Configurações Salvas",
+        description: "As imagens e configurações foram salvas com sucesso no banco de dados",
+      });
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: "Erro ao Salvar",
+        description: "Ocorreu um erro ao salvar as configurações",
+        variant: "destructive"
+      });
+    }
   };
   
-  // Load settings from localStorage
+  // Load settings from localStorage and database
   useEffect(() => {
-    const savedSettings = localStorage.getItem('landingPageSettings');
-    if (savedSettings) {
-      const parsedSettings = JSON.parse(savedSettings);
-      setHeroTitle(parsedSettings.heroTitle || heroTitle);
-      setHeroDescription(parsedSettings.heroDescription || heroDescription);
-      setHeroImageUrl(parsedSettings.heroImageUrl || heroImageUrl);
-      setAboutTitle1(parsedSettings.aboutTitle1 || aboutTitle1);
-      setAboutTitle2(parsedSettings.aboutTitle2 || aboutTitle2);
-      setAboutDescription1(parsedSettings.aboutDescription1 || aboutDescription1);
-      setAboutDescription2(parsedSettings.aboutDescription2 || aboutDescription2);
-      setServices(parsedSettings.services || services);
-      setStats(parsedSettings.stats || stats);
-      
-      // Load header customization settings
-      if (parsedSettings.headerHeight) setHeaderHeight(parsedSettings.headerHeight);
-      if (parsedSettings.logoUrl) setLogoUrl(parsedSettings.logoUrl);
-      if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
-      if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
-      if (parsedSettings.menuItems && Array.isArray(parsedSettings.menuItems)) {
-        setMenuItems(parsedSettings.menuItems);
+    const loadSettings = async () => {
+      const savedSettings = localStorage.getItem('landingPageSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          setHeroTitle(parsedSettings.heroTitle || heroTitle);
+          setHeroDescription(parsedSettings.heroDescription || heroDescription);
+          
+          // Handle hero image - check if it's a database reference
+          if (parsedSettings.heroImageUrl) {
+            if (parsedSettings.heroImageUrl.startsWith('db-image://')) {
+              // Load from database
+              const imageData = await retrieveImage(parsedSettings.heroImageUrl);
+              if (imageData) {
+                setHeroImageUrl(imageData);
+              } else {
+                setHeroImageUrl(heroImageUrl); // Use default if not found
+              }
+            } else {
+              setHeroImageUrl(parsedSettings.heroImageUrl);
+            }
+          }
+          
+          setAboutTitle1(parsedSettings.aboutTitle1 || aboutTitle1);
+          setAboutTitle2(parsedSettings.aboutTitle2 || aboutTitle2);
+          setAboutDescription1(parsedSettings.aboutDescription1 || aboutDescription1);
+          setAboutDescription2(parsedSettings.aboutDescription2 || aboutDescription2);
+          setServices(parsedSettings.services || services);
+          setStats(parsedSettings.stats || stats);
+          
+          // Load header customization settings
+          if (parsedSettings.headerHeight) setHeaderHeight(parsedSettings.headerHeight);
+          
+          // Handle logo image - check if it's a database reference
+          if (parsedSettings.logoUrl) {
+            if (parsedSettings.logoUrl.startsWith('db-image://')) {
+              // Load from database
+              const logoData = await retrieveImage(parsedSettings.logoUrl);
+              if (logoData) {
+                setLogoUrl(logoData);
+              }
+            } else {
+              setLogoUrl(parsedSettings.logoUrl);
+            }
+          }
+          
+          if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
+          if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
+          if (parsedSettings.menuItems && Array.isArray(parsedSettings.menuItems)) {
+            setMenuItems(parsedSettings.menuItems);
+          }
+        } catch (error) {
+          console.error('Error loading settings:', error);
+        }
       }
-    }
+    };
+    
+    loadSettings();
   }, []);
 
   const handleUpdateService = (index: number, field: keyof Service, value: string) => {

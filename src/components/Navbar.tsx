@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from './ui/input';
 import { UserRound, LogIn } from 'lucide-react';
 import { useToast } from './ui/use-toast';
+import { retrieveImage } from '../utils/imageStorage';
 
 const Navbar = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -24,28 +25,57 @@ const Navbar = () => {
   const [menuItems, setMenuItems] = useState([
     { id: 'home', text: 'Home', link: '/' },
     { id: 'about', text: 'Sobre', link: '/about' },
-    { id: 'services', text: 'Serviços', link: '/services' },
+    { 
+      id: 'services', 
+      text: 'Serviços', 
+      link: '/services',
+      hasSubmenu: true,
+      submenu: [
+        { id: 'banho-tosa', text: 'Banho & Tosa', link: '/banho-tosa' },
+        { id: 'hospedagem', text: 'Hospedagem', link: '/hospedagem' }
+      ] 
+    },
     { id: 'price', text: 'Preços', link: '/price' },
     { id: 'contact', text: 'Contato', link: '/contact' }
   ]);
   
-  // Load header settings from localStorage
+  // Load header settings from localStorage and database
   useEffect(() => {
-    const savedSettings = localStorage.getItem('landingPageSettings');
-    if (savedSettings) {
-      try {
-        const parsedSettings = JSON.parse(savedSettings);
-        if (parsedSettings.headerHeight) setHeaderHeight(parsedSettings.headerHeight);
-        if (parsedSettings.logoUrl) setLogoUrl(parsedSettings.logoUrl);
-        if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
-        if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
-        if (parsedSettings.menuItems && Array.isArray(parsedSettings.menuItems)) {
-          setMenuItems(parsedSettings.menuItems);
+    const loadSettings = async () => {
+      const savedSettings = localStorage.getItem('landingPageSettings');
+      if (savedSettings) {
+        try {
+          const parsedSettings = JSON.parse(savedSettings);
+          if (parsedSettings.headerHeight) setHeaderHeight(parsedSettings.headerHeight);
+          
+          // Handle logo URL - check if it's a database reference
+          if (parsedSettings.logoUrl) {
+            if (parsedSettings.logoUrl.startsWith('db-image://')) {
+              // Load from database
+              const logoData = await retrieveImage(parsedSettings.logoUrl);
+              if (logoData) {
+                setLogoUrl(logoData);
+              } else {
+                console.warn('Logo image not found in database');
+              }
+            } else {
+              // Regular URL
+              setLogoUrl(parsedSettings.logoUrl);
+            }
+          }
+          
+          if (parsedSettings.logoWidth) setLogoWidth(parsedSettings.logoWidth);
+          if (parsedSettings.logoHorizontalOffset) setLogoHorizontalOffset(parsedSettings.logoHorizontalOffset);
+          if (parsedSettings.menuItems && Array.isArray(parsedSettings.menuItems)) {
+            setMenuItems(parsedSettings.menuItems);
+          }
+        } catch (error) {
+          console.error('Error parsing header settings:', error);
         }
-      } catch (error) {
-        console.error('Error parsing header settings:', error);
       }
-    }
+    };
+    
+    loadSettings();
   }, []);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -183,7 +213,26 @@ const Navbar = () => {
       
       <div className="hidden md:flex gap-8">
         {menuItems.map((item) => (
-          <Link key={item.id} to={item.link} className="font-medium">{item.text}</Link>
+          <div key={item.id} className="relative group">
+            <Link to={item.link} className="font-medium py-2 flex items-center">
+              {item.text}
+              {item.hasSubmenu && <span className="ml-1">▼</span>}
+            </Link>
+            
+            {item.hasSubmenu && item.submenu && (
+              <div className="absolute left-0 top-full bg-white shadow-md rounded-md py-2 min-w-[150px] hidden group-hover:block z-10">
+                {item.submenu.map((subItem) => (
+                  <Link 
+                    key={subItem.id} 
+                    to={subItem.link} 
+                    className="block px-4 py-2 hover:bg-gray-100 font-medium"
+                  >
+                    {subItem.text}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         ))}
       </div>
     </nav>
