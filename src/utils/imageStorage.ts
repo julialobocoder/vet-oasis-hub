@@ -18,6 +18,29 @@ export const storeImage = async (imageData: string, type: string): Promise<strin
     // Store the image in IndexedDB
     await saveImage(imageId, imageData);
     
+    // Salvar a imagem no localStorage para exportau00e7u00e3o
+    try {
+      const exportedImages = JSON.parse(localStorage.getItem('exportedImages') || '{}');
+      exportedImages[`${type}.png`] = imageData;
+      localStorage.setItem('exportedImages', JSON.stringify(exportedImages));
+      console.log(`Imagem ${type} salva no localStorage para exportau00e7u00e3o`);
+      
+      // Salvar tambem nas configuracu00f5es para garantir persistu00eancia
+      const currentSettings = localStorage.getItem('landingPageSettings');
+      if (currentSettings) {
+        const parsedSettings = JSON.parse(currentSettings);
+        if (type === 'logo') {
+          parsedSettings.logoUrl = `db-image://${imageId}`;
+        } else if (type === 'hero') {
+          parsedSettings.heroImageUrl = `db-image://${imageId}`;
+        }
+        localStorage.setItem('landingPageSettings', JSON.stringify(parsedSettings));
+        console.log(`Referu00eancia da imagem ${type} atualizada nas configuracu00f5es`);
+      }
+    } catch (localStorageError) {
+      console.error(`Erro ao salvar imagem ${type} no localStorage:`, localStorageError);
+    }
+    
     // Return a reference key that can be used to retrieve the image
     return `db-image://${imageId}`;
   } catch (error) {
@@ -67,8 +90,25 @@ export const retrieveImage = async (imageRef: string): Promise<string | null> =>
     } else {
       // Se não encontrar no IndexedDB, tentar carregar do sistema de arquivos
       console.log(`Imagem ${imageType} não encontrada no IndexedDB, tentando sistema de arquivos`);
+      
+      try {
+        // Verificar se a imagem existe no localStorage (pode ter sido salva recentemente)
+        const exportedImages = JSON.parse(localStorage.getItem('exportedImages') || '{}');
+        if (exportedImages[`${imageType}.png`]) {
+          console.log(`Imagem ${imageType} encontrada no localStorage, usando-a`);
+          return exportedImages[`${imageType}.png`];
+        }
+      } catch (localStorageError) {
+        console.error('Erro ao verificar localStorage:', localStorageError);
+      }
+      
+      // Adicionar timestamp para evitar cache do navegador
       const timestamp = Date.now();
-      return `/assets/images/${imageType}.png?t=${timestamp}`;
+      const imagePath = `/assets/images/${imageType}.png?t=${timestamp}`;
+      
+      // Retornar o caminho da imagem no sistema de arquivos
+      console.log(`Tentando carregar imagem do caminho: ${imagePath}`);
+      return imagePath;
     }
   } catch (error) {
     console.error('Falha ao recuperar imagem:', error);

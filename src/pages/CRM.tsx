@@ -312,6 +312,20 @@ const CRM = () => {
   // Load settings from localStorage and database
   useEffect(() => {
     const loadSettings = async () => {
+      console.log('Carregando configurações...');
+      
+      // Verificar se há imagens exportadas no localStorage
+      const exportedImagesStr = localStorage.getItem('exportedImages');
+      let exportedImages = {};
+      if (exportedImagesStr) {
+        try {
+          exportedImages = JSON.parse(exportedImagesStr);
+          console.log('Imagens exportadas encontradas no localStorage:', Object.keys(exportedImages));
+        } catch (error) {
+          console.error('Erro ao analisar imagens exportadas:', error);
+        }
+      }
+      
       const savedSettings = localStorage.getItem('landingPageSettings');
       if (savedSettings) {
         try {
@@ -321,14 +335,24 @@ const CRM = () => {
           
           // Handle hero image - check if it's a database reference
           if (parsedSettings.heroImageUrl) {
+            console.log('Carregando imagem do herói de:', parsedSettings.heroImageUrl);
+            
             if (parsedSettings.heroImageUrl.startsWith('db-image://')) {
               // Load from database
               const imageData = await retrieveImage(parsedSettings.heroImageUrl);
               if (imageData) {
+                console.log('Imagem do herói carregada com sucesso do IndexedDB');
                 setHeroImageUrl(imageData);
+              } else if (exportedImages['hero.png']) {
+                // Tentar usar a imagem do localStorage se disponível
+                console.log('Usando imagem do herói do localStorage');
+                setHeroImageUrl(exportedImages['hero.png']);
               } else {
-                // Usar um placeholder genérico em vez da imagem padrão
-                setHeroImageUrl(""); // String vazia para forçar o uso do placeholder
+                // Tentar carregar do sistema de arquivos
+                const timestamp = Date.now();
+                const heroPath = `/assets/images/hero.png?t=${timestamp}`;
+                console.log('Tentando carregar imagem do herói do sistema de arquivos:', heroPath);
+                setHeroImageUrl(heroPath);
               }
             } else {
               setHeroImageUrl(parsedSettings.heroImageUrl);
@@ -347,11 +371,24 @@ const CRM = () => {
           
           // Handle logo image - check if it's a database reference
           if (parsedSettings.logoUrl) {
+            console.log('Carregando imagem do logo de:', parsedSettings.logoUrl);
+            
             if (parsedSettings.logoUrl.startsWith('db-image://')) {
               // Load from database
               const logoData = await retrieveImage(parsedSettings.logoUrl);
               if (logoData) {
+                console.log('Imagem do logo carregada com sucesso do IndexedDB');
                 setLogoUrl(logoData);
+              } else if (exportedImages['logo.png']) {
+                // Tentar usar a imagem do localStorage se disponível
+                console.log('Usando imagem do logo do localStorage');
+                setLogoUrl(exportedImages['logo.png']);
+              } else {
+                // Tentar carregar do sistema de arquivos
+                const timestamp = Date.now();
+                const logoPath = `/assets/images/logo.png?t=${timestamp}`;
+                console.log('Tentando carregar imagem do logo do sistema de arquivos:', logoPath);
+                setLogoUrl(logoPath);
               }
             } else {
               setLogoUrl(parsedSettings.logoUrl);
