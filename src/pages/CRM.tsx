@@ -100,6 +100,84 @@ const CRM = () => {
   const { toast } = useToast();
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
+  
+  // Initialize the form with React Hook Form
+  const appointmentForm = useForm({
+    defaultValues: {
+      petName: '',
+      petType: '',
+      ownerName: '',
+      service: '',
+      time: '',
+      notes: ''
+    }
+  });
+  
+  // Function to handle appointment form submission
+  const onAppointmentFormSubmit = (data: any) => {
+    // Format the appointment date
+    const formattedDate = appointmentDate ? format(appointmentDate, "dd 'de' MMM", { locale: pt }) : '';
+    
+    // Verify if service was selected
+    if (!data.service) {
+      toast({
+        title: "Erro no Agendamento",
+        description: "Por favor, selecione um serviço para a consulta",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Verify if time was selected
+    if (!data.time) {
+      toast({
+        title: "Erro no Agendamento",
+        description: "Por favor, selecione um horário para a consulta",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Check for conflicting appointments
+    const conflictingAppointment = appointments.find(
+      app => app.date === `${formattedDate}, ${data.time}` && app.status !== "cancelled"
+    );
+    
+    if (conflictingAppointment) {
+      toast({
+        title: "Horário Indisponível",
+        description: `Já existe uma consulta agendada para ${formattedDate} às ${data.time}`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Create the new appointment
+    const newAppointment: Appointment = {
+      id: appointments.length + 1,
+      petName: data.petName,
+      petType: data.petType,
+      ownerName: data.ownerName,
+      service: data.service,
+      date: `${formattedDate}, ${data.time}`,
+      status: "pending"
+    };
+    
+    // Add the new appointment to the list
+    setAppointments([...appointments, newAppointment]);
+    
+    // Show success message
+    toast({
+      title: "Consulta Agendada",
+      description: `Consulta para ${data.petName} agendada com sucesso para ${formattedDate} às ${data.time}`,
+    });
+    
+    // Close the dialog
+    setShowAppointmentDialog(false);
+    
+    // Reset the form
+    appointmentForm.reset();
+  };
 
   // Landing page settings state
   const [heroTitle, setHeroTitle] = useState("Podemos Oferecer Serviços de Qualidade para Pets");
@@ -159,31 +237,44 @@ const CRM = () => {
     }
   });
 
-  const appointmentForm = useForm({
-    defaultValues: {
+  // Estado para o formulu00e1rio de agendamento
+  const [appointmentFormData, setAppointmentFormData] = useState({
+    petName: '',
+    petType: '',
+    ownerName: '',
+    service: '',
+    time: '',
+    notes: ''
+  });
+  
+  // Funu00e7u00e3o para atualizar os campos do formulu00e1rio
+  const handleAppointmentFormChange = (field: string, value: string) => {
+    setAppointmentFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+  
+  // Funu00e7u00e3o para resetar o formulu00e1rio
+  const resetAppointmentForm = () => {
+    setAppointmentFormData({
       petName: '',
       petType: '',
       ownerName: '',
       service: '',
       time: '',
       notes: ''
-    }
-  });
+    });
+    setAppointmentDate(new Date());
+  };
 
   // Efeito para limpar o formulário quando o diálogo é fechado
   useEffect(() => {
     if (!showAppointmentDialog) {
       // Resetar o formulário quando o diálogo é fechado
-      appointmentForm.reset({
-        petName: "",
-        petType: "",
-        ownerName: "",
-        service: "",
-        time: "",
-        notes: ""
-      }, { keepDefaultValues: true });
+      resetAppointmentForm();
     }
-  }, [showAppointmentDialog, appointmentForm]);
+  }, [showAppointmentDialog]);
 
   const staffForm = useForm({
     defaultValues: {
@@ -510,7 +601,7 @@ const CRM = () => {
   };
   
   // Appointment handling functions
-  const handleScheduleAppointment = (data: any) => {
+  const handleScheduleAppointment = (data: typeof appointmentFormData) => {
     // Verificar se a data foi selecionada
     if (!appointmentDate) {
       toast({
@@ -629,7 +720,7 @@ const CRM = () => {
     
     // Fechar o diálogo e resetar o formulário
     setShowAppointmentDialog(false);
-    appointmentForm.reset();
+    resetAppointmentForm();
     
     // Mostrar mensagem de sucesso
     toast({
@@ -829,17 +920,7 @@ const CRM = () => {
                             className="flex gap-1 bg-pet-blue hover:bg-pet-blue/90"
                             onClick={() => {
                               // Resetar o formulário antes de abrir o diálogo
-                              appointmentForm.reset({
-                                petName: "",
-                                petType: "",
-                                ownerName: "",
-                                service: "",
-                                time: "",
-                                notes: ""
-                              }, { keepDefaultValues: true });
-                              
-                              // Definir a data atual como data padrão
-                              setAppointmentDate(new Date());
+                              resetAppointmentForm();
                               
                               // Abrir o diálogo de agendamento
                               setShowAppointmentDialog(true);
@@ -949,37 +1030,53 @@ const CRM = () => {
                         Preencha os dados abaixo para agendar uma nova consulta
                       </DialogDescription>
                     </DialogHeader>
-                    <form onSubmit={appointmentForm.handleSubmit(handleScheduleAppointment)}>
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      handleScheduleAppointment(appointmentFormData);
+                    }}>
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <FormLabel>Nome do Pet</FormLabel>
-                            <Input 
-                              {...appointmentForm.register("petName")} 
-                              placeholder="Nome do pet" 
-                              required 
+                            <FormLabel htmlFor="petName">Nome do Pet</FormLabel>
+                            <Input
+                              id="petName"
+                              name="petName"
+                              value={appointmentFormData.petName}
+                              onChange={(e) => handleAppointmentFormChange(e.target.name, e.target.value)}
+                              placeholder="Nome do pet"
+                              required
                             />
                           </div>
                           <div className="space-y-1">
-                            <FormLabel>Tipo do Pet</FormLabel>
-                            <Input 
-                              {...appointmentForm.register("petType")} 
-                              placeholder="Ex: Gato, Cachorro" 
-                              required 
+                            <FormLabel htmlFor="petType">Tipo do Pet</FormLabel>
+                            <Input
+                              id="petType"
+                              name="petType"
+                              value={appointmentFormData.petType}
+                              onChange={(e) => handleAppointmentFormChange(e.target.name, e.target.value)}
+                              placeholder="Ex: Gato, Cachorro"
+                              required
                             />
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <FormLabel>Nome do Proprietário</FormLabel>
-                          <Input 
-                            {...appointmentForm.register("ownerName")} 
-                            placeholder="Nome completo do proprietário" 
-                            required 
+                          <FormLabel htmlFor="ownerName">Nome do Proprietário</FormLabel>
+                          <Input
+                            id="ownerName"
+                            name="ownerName"
+                            value={appointmentFormData.ownerName}
+                            onChange={(e) => handleAppointmentFormChange(e.target.name, e.target.value)}
+                            placeholder="Nome completo do proprietário"
+                            required
                           />
                         </div>
                         <div className="space-y-1">
-                          <FormLabel>Serviço</FormLabel>
-                          <Select onValueChange={value => appointmentForm.setValue("service", value)} required>
+                          <FormLabel htmlFor="service">Serviço</FormLabel>
+                          <Select
+                            value={appointmentFormData.service}
+                            onValueChange={(value) => handleAppointmentFormChange("service", value)}
+                            required
+                          >
                             <SelectTrigger>
                               <SelectValue placeholder="Selecione o serviço" />
                             </SelectTrigger>
@@ -1020,8 +1117,12 @@ const CRM = () => {
                             </Popover>
                           </div>
                           <div className="space-y-1">
-                            <FormLabel>Horário</FormLabel>
-                            <Select onValueChange={value => appointmentForm.setValue("time", value)} required>
+                            <FormLabel htmlFor="time">Horário</FormLabel>
+                            <Select
+                              value={appointmentFormData.time}
+                              onValueChange={(value) => handleAppointmentFormChange("time", value)}
+                              required
+                            >
                               <SelectTrigger>
                                 <SelectValue placeholder="Selecione o horário" />
                               </SelectTrigger>
@@ -1038,9 +1139,12 @@ const CRM = () => {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <FormLabel>Observações</FormLabel>
-                          <Textarea 
-                            {...appointmentForm.register("notes")} 
+                          <FormLabel htmlFor="notes">Observações</FormLabel>
+                          <Textarea
+                            id="notes"
+                            name="notes"
+                            value={appointmentFormData.notes}
+                            onChange={(e) => handleAppointmentFormChange(e.target.name, e.target.value)}
                             placeholder="Observações adicionais"
                             rows={3}
                           />
@@ -1054,8 +1158,8 @@ const CRM = () => {
                         >
                           Cancelar
                         </Button>
-                        <Button type="submit" className="bg-pet-blue hover:bg-pet-blue/90">
-                          Agendar Consulta
+                        <Button type="submit" className="bg-pet-green hover:bg-pet-green/90">
+                          Agendar
                         </Button>
                       </DialogFooter>
                     </form>
@@ -2053,7 +2157,7 @@ const CRM = () => {
         </div>
       </div>
       
-      {/* Diu00e1logo de Agendamento de Consulta */}
+      {/* Diálogo de Agendamento de Consulta */}
       <Dialog open={showAppointmentDialog} onOpenChange={setShowAppointmentDialog}>
         <DialogContent className="sm:max-w-[550px]">
           <DialogHeader>
@@ -2069,57 +2173,88 @@ const CRM = () => {
             </DialogTitle>
           </DialogHeader>
           
-          <form onSubmit={appointmentForm.handleSubmit(handleScheduleAppointment)}>
-            <div className="grid gap-4 py-4">
+          <Form {...appointmentForm}>
+            <form onSubmit={appointmentForm.handleSubmit(onAppointmentFormSubmit)} className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <FormLabel>Nome do Pet</FormLabel>
-                  <Input 
-                    {...appointmentForm.register("petName")} 
-                    placeholder="Ex: Max"
-                    required
-                  />
-                </div>
-                <div className="space-y-1">
-                  <FormLabel>Tipo de Pet</FormLabel>
-                  <Input 
-                    {...appointmentForm.register("petType")} 
-                    placeholder="Ex: Cachorro, Gato, etc."
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <FormLabel>Nome do Dono</FormLabel>
-                <Input 
-                  {...appointmentForm.register("ownerName")} 
-                  placeholder="Nome completo do dono"
-                  required
+                <FormField
+                  control={appointmentForm.control}
+                  name="petName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Pet</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Ex: Max"
+                          required
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={appointmentForm.control}
+                  name="petType"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Pet</FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Ex: Cachorro, Gato, etc."
+                          required
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
                 />
               </div>
               
-              <div className="space-y-1">
-                <FormLabel>Serviço</FormLabel>
-                <Select 
-                  onValueChange={(value) => appointmentForm.setValue("service", value)}
-                  defaultValue={appointmentForm.getValues("service")}
-                  required
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o serviço" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Consulta Geral">Consulta Geral</SelectItem>
-                    <SelectItem value="Vacinação">Vacinação</SelectItem>
-                    <SelectItem value="Banho e Tosa">Banho e Tosa</SelectItem>
-                    <SelectItem value="Exames">Exames</SelectItem>
-                    <SelectItem value="Cirurgia">Cirurgia</SelectItem>
-                    <SelectItem value="Castração">Castração</SelectItem>
-                    <SelectItem value="Limpeza Dental">Limpeza Dental</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <FormField
+                control={appointmentForm.control}
+                name="ownerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome do Dono</FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="Nome completo do dono"
+                        required
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={appointmentForm.control}
+                name="service"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Serviço</FormLabel>
+                    <Select 
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o serviço" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Consulta Geral">Consulta Geral</SelectItem>
+                        <SelectItem value="Vacinação">Vacinação</SelectItem>
+                        <SelectItem value="Banho e Tosa">Banho e Tosa</SelectItem>
+                        <SelectItem value="Exames">Exames</SelectItem>
+                        <SelectItem value="Cirurgia">Cirurgia</SelectItem>
+                        <SelectItem value="Castração">Castração</SelectItem>
+                        <SelectItem value="Limpeza Dental">Limpeza Dental</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </FormItem>
+                )}
+              />
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
@@ -2129,6 +2264,7 @@ const CRM = () => {
                       <Button
                         variant="outline"
                         className="w-full justify-start text-left font-normal"
+                        type="button"
                       >
                         <CalendarDays className="mr-2 h-4 w-4" />
                         {appointmentDate ? format(appointmentDate, "PPP", { locale: pt }) : "Selecione uma data"}
@@ -2146,54 +2282,69 @@ const CRM = () => {
                   </Popover>
                 </div>
                 
-                <div className="space-y-1">
-                  <FormLabel>Horário</FormLabel>
-                  <Select 
-                    onValueChange={(value) => appointmentForm.setValue("time", value)}
-                    defaultValue={appointmentForm.getValues("time")}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o horário" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="08:00">08:00</SelectItem>
-                      <SelectItem value="09:00">09:00</SelectItem>
-                      <SelectItem value="10:00">10:00</SelectItem>
-                      <SelectItem value="11:00">11:00</SelectItem>
-                      <SelectItem value="13:00">13:00</SelectItem>
-                      <SelectItem value="14:00">14:00</SelectItem>
-                      <SelectItem value="15:00">15:00</SelectItem>
-                      <SelectItem value="16:00">16:00</SelectItem>
-                      <SelectItem value="17:00">17:00</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="space-y-1">
-                <FormLabel>Observações</FormLabel>
-                <Textarea 
-                  {...appointmentForm.register("notes")} 
-                  placeholder="Observações adicionais sobre a consulta"
-                  rows={3}
+                <FormField
+                  control={appointmentForm.control}
+                  name="time"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Horário</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o horário" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="08:00">08:00</SelectItem>
+                          <SelectItem value="09:00">09:00</SelectItem>
+                          <SelectItem value="10:00">10:00</SelectItem>
+                          <SelectItem value="11:00">11:00</SelectItem>
+                          <SelectItem value="13:00">13:00</SelectItem>
+                          <SelectItem value="14:00">14:00</SelectItem>
+                          <SelectItem value="15:00">15:00</SelectItem>
+                          <SelectItem value="16:00">16:00</SelectItem>
+                          <SelectItem value="17:00">17:00</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
                 />
               </div>
-            </div>
-            
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                type="button" 
-                onClick={() => setShowAppointmentDialog(false)}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" className="bg-pet-blue hover:bg-pet-blue/90">
-                Agendar Consulta
-              </Button>
-            </DialogFooter>
-          </form>
+              
+              <FormField
+                control={appointmentForm.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        {...field} 
+                        placeholder="Observações adicionais sobre a consulta"
+                        rows={3}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  type="button" 
+                  onClick={() => setShowAppointmentDialog(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" className="bg-pet-blue hover:bg-pet-blue/90">
+                  Agendar Consulta
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
         </DialogContent>
       </Dialog>
     </div>
