@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import ClientDialog from '@/components/ClientDialog';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -543,28 +544,6 @@ const CRM = () => {
   };
   
   // Client handling functions
-  const handleAddClient = (data: any) => {
-    const newClient: Client = {
-      id: clients.length + 1,
-      petName: data.petName,
-      petType: data.petType,
-      ownerName: data.ownerName,
-      ownerEmail: data.ownerEmail,
-      ownerPhone: data.ownerPhone,
-      joinDate: format(new Date(), 'MMM yyyy', { locale: pt }),
-      visits: 0,
-      notes: data.notes
-    };
-    
-    setClients([...clients, newClient]);
-    setShowAddClientDialog(false);
-    clientForm.reset();
-    
-    toast({
-      title: "Cliente Adicionado",
-      description: `${data.petName} foi adicionado à lista de clientes`,
-    });
-  };
   
   const handleViewClient = (client: Client) => {
     setSelectedClient(client);
@@ -1231,90 +1210,25 @@ const CRM = () => {
                   </CardContent>
                 </Card>
 
-                {/* Adicionar Cliente Dialog */}
-                <Dialog open={showAddClientDialog} onOpenChange={setShowAddClientDialog}>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle className="text-center">Adicionar Novo Cliente</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={clientForm.handleSubmit(handleAddClient)}>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <FormLabel>Nome do Pet</FormLabel>
-                            <Input 
-                              {...clientForm.register("petName")} 
-                              placeholder="Nome do pet" 
-                              required 
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <FormLabel>Tipo do Pet</FormLabel>
-                            <Input 
-                              {...clientForm.register("petType")} 
-                              placeholder="Ex: Gato Siamês, Labrador" 
-                              required 
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <FormLabel>Nome do Proprietário</FormLabel>
-                          <Input 
-                            {...clientForm.register("ownerName")} 
-                            placeholder="Nome completo do proprietário" 
-                            required 
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <FormLabel>Email</FormLabel>
-                            <Input 
-                              {...clientForm.register("ownerEmail")} 
-                              type="email" 
-                              placeholder="Email do proprietário" 
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <FormLabel>Telefone</FormLabel>
-                            <Input 
-                              {...clientForm.register("ownerPhone")} 
-                              placeholder="(00) 00000-0000" 
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <FormLabel>Observações</FormLabel>
-                          <Textarea 
-                            {...clientForm.register("notes")} 
-                            placeholder="Observações adicionais sobre o pet"
-                            rows={3}
-                          />
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            id="vaccinated" 
-                            {...clientForm.register("vaccinated")} 
-                          />
-                          <label htmlFor="vaccinated" className="text-sm font-medium">
-                            Pet vacinado
-                          </label>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button 
-                          variant="outline" 
-                          type="button" 
-                          onClick={() => setShowAddClientDialog(false)}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button type="submit" className="bg-pet-green hover:bg-pet-green/90">
-                          Adicionar Cliente
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                {/* Usando o novo componente ClientDialog para cadastro de clientes */}
+                <ClientDialog 
+                  open={showAddClientDialog}
+                  onOpenChange={setShowAddClientDialog}
+                  onAddClient={(newClient) => {
+                    // Criar novo cliente com dados adicionais
+                    const client: Client = {
+                      id: clients.length + 1,
+                      ...newClient,
+                      joinDate: format(new Date(), 'MMM yyyy', { locale: pt }),
+                      visits: 0,
+                      lastVisit: undefined
+                    };
+                    
+                    // Adicionar o cliente à lista
+                    setClients([...clients, client]);
+                  }}
+                  toast={toast}
+                />
 
                 {/* Detalhes do Cliente Dialog */}
                 <Dialog open={showClientDetailDialog} onOpenChange={setShowClientDetailDialog}>
