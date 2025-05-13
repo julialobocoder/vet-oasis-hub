@@ -1037,7 +1037,7 @@ const CRM = () => {
                       <div className="grid gap-4 py-4">
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <FormLabel htmlFor="petName">Nome do Pet</FormLabel>
+                            <label htmlFor="petName" className="text-sm font-medium">Nome do Pet</label>
                             <Input
                               id="petName"
                               name="petName"
@@ -1048,7 +1048,7 @@ const CRM = () => {
                             />
                           </div>
                           <div className="space-y-1">
-                            <FormLabel htmlFor="petType">Tipo do Pet</FormLabel>
+                            <label htmlFor="petType" className="text-sm font-medium">Tipo do Pet</label>
                             <Input
                               id="petType"
                               name="petType"
@@ -1060,7 +1060,7 @@ const CRM = () => {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <FormLabel htmlFor="ownerName">Nome do Proprietário</FormLabel>
+                          <label htmlFor="ownerName" className="text-sm font-medium">Nome do Proprietário</label>
                           <Input
                             id="ownerName"
                             name="ownerName"
@@ -1071,7 +1071,7 @@ const CRM = () => {
                           />
                         </div>
                         <div className="space-y-1">
-                          <FormLabel htmlFor="service">Serviço</FormLabel>
+                          <label htmlFor="service" className="text-sm font-medium">Serviço</label>
                           <Select
                             value={appointmentFormData.service}
                             onValueChange={(value) => handleAppointmentFormChange("service", value)}
@@ -1093,7 +1093,7 @@ const CRM = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="space-y-1">
-                            <FormLabel>Data</FormLabel>
+                            <label className="text-sm font-medium">Data</label>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start text-left">
@@ -1117,7 +1117,7 @@ const CRM = () => {
                             </Popover>
                           </div>
                           <div className="space-y-1">
-                            <FormLabel htmlFor="time">Horário</FormLabel>
+                            <label htmlFor="time" className="text-sm font-medium">Horário</label>
                             <Select
                               value={appointmentFormData.time}
                               onValueChange={(value) => handleAppointmentFormChange("time", value)}
@@ -1139,7 +1139,7 @@ const CRM = () => {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <FormLabel htmlFor="notes">Observações</FormLabel>
+                          <label htmlFor="notes" className="text-sm font-medium">Observações</label>
                           <Textarea
                             id="notes"
                             name="notes"
