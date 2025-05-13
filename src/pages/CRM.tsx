@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ClientDialog from '@/components/ClientDialog';
+import StaffDialog from '@/components/StaffDialog';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
@@ -1442,90 +1443,24 @@ const CRM = () => {
                   </CardContent>
                 </Card>
 
-                {/* Adicionar Membro da Equipe Dialog */}
-                <Dialog open={showAddStaffDialog} onOpenChange={setShowAddStaffDialog}>
-                  <DialogContent className="sm:max-w-[500px]">
-                    <DialogHeader>
-                      <DialogTitle className="text-center">Adicionar Membro da Equipe</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={staffForm.handleSubmit(handleAddStaffMember)}>
-                      <div className="grid gap-4 py-4">
-                        <div className="space-y-1">
-                          <FormLabel>Nome Completo</FormLabel>
-                          <Input 
-                            {...staffForm.register("name")} 
-                            placeholder="Nome completo" 
-                            required 
-                          />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <FormLabel>Cargo</FormLabel>
-                            <Select onValueChange={value => staffForm.setValue("role", value)} required>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o cargo" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Veterinário">Veterinário</SelectItem>
-                                <SelectItem value="Veterinária">Veterinária</SelectItem>
-                                <SelectItem value="Auxiliar Veterinário">Auxiliar Veterinário</SelectItem>
-                                <SelectItem value="Tosador">Tosador</SelectItem>
-                                <SelectItem value="Recepcionista">Recepcionista</SelectItem>
-                                <SelectItem value="Gerente">Gerente</SelectItem>
-                                <SelectItem value="Adestrador">Adestrador</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <FormLabel>Especialização</FormLabel>
-                            <Input 
-                              {...staffForm.register("specialization")} 
-                              placeholder="Ex: Cirurgia, Clínica Geral" 
-                            />
-                          </div>
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-1">
-                            <FormLabel>Email</FormLabel>
-                            <Input 
-                              {...staffForm.register("email")} 
-                              type="email" 
-                              placeholder="Email profissional" 
-                              required 
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <FormLabel>Telefone</FormLabel>
-                            <Input 
-                              {...staffForm.register("phone")} 
-                              placeholder="(00) 00000-0000" 
-                            />
-                          </div>
-                        </div>
-                        <div className="space-y-1">
-                          <FormLabel>Horário de Trabalho</FormLabel>
-                          <Input 
-                            {...staffForm.register("schedule")} 
-                            placeholder="Ex: Seg-Sex, 9h-17h"
-                            required 
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button 
-                          variant="outline" 
-                          type="button" 
-                          onClick={() => setShowAddStaffDialog(false)}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button type="submit" className="bg-pet-orange hover:bg-pet-orange/90">
-                          Adicionar Membro
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
+                {/* Usando o novo componente StaffDialog para cadastro de funcionários */}
+                <StaffDialog 
+                  open={showAddStaffDialog}
+                  onOpenChange={setShowAddStaffDialog}
+                  onAddStaffMember={(newStaffMember) => {
+                    // Criar novo membro da equipe com dados adicionais
+                    const staffMember: StaffMember = {
+                      id: staffMembers.length + 1,
+                      ...newStaffMember,
+                      startDate: format(new Date(), 'MMM yyyy', { locale: pt }),
+                      avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
+                    };
+                    
+                    // Adicionar o membro à equipe
+                    setStaffMembers([...staffMembers, staffMember]);
+                  }}
+                  toast={toast}
+                />
 
                 {/* Detalhes do Membro da Equipe Dialog */}
                 <Dialog open={showStaffDetailDialog} onOpenChange={setShowStaffDetailDialog}>
