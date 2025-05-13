@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
-import ClientDialog from '@/components/ClientDialog';
-import StaffDialog from '@/components/StaffDialog';
 import Navbar from '@/components/Navbar';
 import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { storeImage, retrieveImage } from '../utils/imageStorage';
 import { exportImagesOnSave } from '../utils/export-local-images';
-import { ArrowLeft, Search, PlusCircle, Filter, CalendarDays, Users, Activity, Settings, Image, X, CalendarCheck, Download, Upload } from 'lucide-react';
+import { ArrowLeft, Search, PlusCircle, Filter, CalendarDays, Users, Activity, Settings, Image, X, CalendarCheck } from 'lucide-react';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -101,7 +99,6 @@ const CRM = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
-  const [videoUrl, setVideoUrl] = useState("");
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
   
   // Initialize the form with React Hook Form
@@ -441,7 +438,6 @@ const CRM = () => {
           const parsedSettings = JSON.parse(savedSettings);
           setHeroTitle(parsedSettings.heroTitle || heroTitle);
           setHeroDescription(parsedSettings.heroDescription || heroDescription);
-          setVideoUrl(parsedSettings.videoUrl || videoUrl);
           
           // Handle hero image - check if it's a database reference
           if (parsedSettings.heroImageUrl) {
@@ -547,6 +543,28 @@ const CRM = () => {
   };
   
   // Client handling functions
+  const handleAddClient = (data: any) => {
+    const newClient: Client = {
+      id: clients.length + 1,
+      petName: data.petName,
+      petType: data.petType,
+      ownerName: data.ownerName,
+      ownerEmail: data.ownerEmail,
+      ownerPhone: data.ownerPhone,
+      joinDate: format(new Date(), 'MMM yyyy', { locale: pt }),
+      visits: 0,
+      notes: data.notes
+    };
+    
+    setClients([...clients, newClient]);
+    setShowAddClientDialog(false);
+    clientForm.reset();
+    
+    toast({
+      title: "Cliente Adicionado",
+      description: `${data.petName} foi adicionado à lista de clientes`,
+    });
+  };
   
   const handleViewClient = (client: Client) => {
     setSelectedClient(client);
@@ -1213,25 +1231,90 @@ const CRM = () => {
                   </CardContent>
                 </Card>
 
-                {/* Usando o novo componente ClientDialog para cadastro de clientes */}
-                <ClientDialog 
-                  open={showAddClientDialog}
-                  onOpenChange={setShowAddClientDialog}
-                  onAddClient={(newClient) => {
-                    // Criar novo cliente com dados adicionais
-                    const client: Client = {
-                      id: clients.length + 1,
-                      ...newClient,
-                      joinDate: format(new Date(), 'MMM yyyy', { locale: pt }),
-                      visits: 0,
-                      lastVisit: undefined
-                    };
-                    
-                    // Adicionar o cliente à lista
-                    setClients([...clients, client]);
-                  }}
-                  toast={toast}
-                />
+                {/* Adicionar Cliente Dialog */}
+                <Dialog open={showAddClientDialog} onOpenChange={setShowAddClientDialog}>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-center">Adicionar Novo Cliente</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={clientForm.handleSubmit(handleAddClient)}>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <FormLabel>Nome do Pet</FormLabel>
+                            <Input 
+                              {...clientForm.register("petName")} 
+                              placeholder="Nome do pet" 
+                              required 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <FormLabel>Tipo do Pet</FormLabel>
+                            <Input 
+                              {...clientForm.register("petType")} 
+                              placeholder="Ex: Gato Siamês, Labrador" 
+                              required 
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <FormLabel>Nome do Proprietário</FormLabel>
+                          <Input 
+                            {...clientForm.register("ownerName")} 
+                            placeholder="Nome completo do proprietário" 
+                            required 
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <FormLabel>Email</FormLabel>
+                            <Input 
+                              {...clientForm.register("ownerEmail")} 
+                              type="email" 
+                              placeholder="Email do proprietário" 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <FormLabel>Telefone</FormLabel>
+                            <Input 
+                              {...clientForm.register("ownerPhone")} 
+                              placeholder="(00) 00000-0000" 
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <FormLabel>Observações</FormLabel>
+                          <Textarea 
+                            {...clientForm.register("notes")} 
+                            placeholder="Observações adicionais sobre o pet"
+                            rows={3}
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="vaccinated" 
+                            {...clientForm.register("vaccinated")} 
+                          />
+                          <label htmlFor="vaccinated" className="text-sm font-medium">
+                            Pet vacinado
+                          </label>
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button 
+                          variant="outline" 
+                          type="button" 
+                          onClick={() => setShowAddClientDialog(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit" className="bg-pet-green hover:bg-pet-green/90">
+                          Adicionar Cliente
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
 
                 {/* Detalhes do Cliente Dialog */}
                 <Dialog open={showClientDetailDialog} onOpenChange={setShowClientDetailDialog}>
@@ -1445,24 +1528,90 @@ const CRM = () => {
                   </CardContent>
                 </Card>
 
-                {/* Usando o novo componente StaffDialog para cadastro de funcionários */}
-                <StaffDialog 
-                  open={showAddStaffDialog}
-                  onOpenChange={setShowAddStaffDialog}
-                  onAddStaffMember={(newStaffMember) => {
-                    // Criar novo membro da equipe com dados adicionais
-                    const staffMember: StaffMember = {
-                      id: staffMembers.length + 1,
-                      ...newStaffMember,
-                      startDate: format(new Date(), 'MMM yyyy', { locale: pt }),
-                      avatar: `https://i.pravatar.cc/150?img=${Math.floor(Math.random() * 70)}`
-                    };
-                    
-                    // Adicionar o membro à equipe
-                    setStaffMembers([...staffMembers, staffMember]);
-                  }}
-                  toast={toast}
-                />
+                {/* Adicionar Membro da Equipe Dialog */}
+                <Dialog open={showAddStaffDialog} onOpenChange={setShowAddStaffDialog}>
+                  <DialogContent className="sm:max-w-[500px]">
+                    <DialogHeader>
+                      <DialogTitle className="text-center">Adicionar Membro da Equipe</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={staffForm.handleSubmit(handleAddStaffMember)}>
+                      <div className="grid gap-4 py-4">
+                        <div className="space-y-1">
+                          <FormLabel>Nome Completo</FormLabel>
+                          <Input 
+                            {...staffForm.register("name")} 
+                            placeholder="Nome completo" 
+                            required 
+                          />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <FormLabel>Cargo</FormLabel>
+                            <Select onValueChange={value => staffForm.setValue("role", value)} required>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o cargo" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Veterinário">Veterinário</SelectItem>
+                                <SelectItem value="Veterinária">Veterinária</SelectItem>
+                                <SelectItem value="Auxiliar Veterinário">Auxiliar Veterinário</SelectItem>
+                                <SelectItem value="Tosador">Tosador</SelectItem>
+                                <SelectItem value="Recepcionista">Recepcionista</SelectItem>
+                                <SelectItem value="Gerente">Gerente</SelectItem>
+                                <SelectItem value="Adestrador">Adestrador</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <FormLabel>Especialização</FormLabel>
+                            <Input 
+                              {...staffForm.register("specialization")} 
+                              placeholder="Ex: Cirurgia, Clínica Geral" 
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <FormLabel>Email</FormLabel>
+                            <Input 
+                              {...staffForm.register("email")} 
+                              type="email" 
+                              placeholder="Email profissional" 
+                              required 
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <FormLabel>Telefone</FormLabel>
+                            <Input 
+                              {...staffForm.register("phone")} 
+                              placeholder="(00) 00000-0000" 
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-1">
+                          <FormLabel>Horário de Trabalho</FormLabel>
+                          <Input 
+                            {...staffForm.register("schedule")} 
+                            placeholder="Ex: Seg-Sex, 9h-17h"
+                            required 
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button 
+                          variant="outline" 
+                          type="button" 
+                          onClick={() => setShowAddStaffDialog(false)}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button type="submit" className="bg-pet-orange hover:bg-pet-orange/90">
+                          Adicionar Membro
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </DialogContent>
+                </Dialog>
 
                 {/* Detalhes do Membro da Equipe Dialog */}
                 <Dialog open={showStaffDetailDialog} onOpenChange={setShowStaffDetailDialog}>
@@ -1566,62 +1715,6 @@ const CRM = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
-                      {/* Video Settings */}
-                      <div>
-                        <h3 className="text-lg font-medium mb-3">Vídeo Promocional</h3>
-                        <Separator className="mb-4" />
-                        <div className="space-y-4">
-                          <div>
-                            <label className="text-sm font-medium">URL do Vídeo</label>
-                            <div className="flex gap-2 mt-1">
-                              <Input 
-                                value={videoUrl} 
-                                onChange={(e) => setVideoUrl(e.target.value)}
-                                className="flex-1"
-                                placeholder="Cole aqui a URL do vídeo (YouTube, Vimeo, etc.)"
-                              />
-                              <Button 
-                                className="bg-pet-blue hover:bg-pet-blue/90"
-                                onClick={() => {
-                                  // Salvar a URL do vídeo no localStorage
-                                  try {
-                                    const currentSettings = localStorage.getItem('landingPageSettings');
-                                    const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
-                                    
-                                    // Atualizar as configurações com a URL do vídeo
-                                    const updatedSettings = {
-                                      ...parsedSettings,
-                                      videoUrl: videoUrl
-                                    };
-                                    
-                                    // Salvar as configurações atualizadas
-                                    localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
-                                    
-                                    // Mostrar toast de sucesso
-                                    toast({
-                                      title: "Vídeo Configurado",
-                                      description: "A URL do vídeo foi salva com sucesso"
-                                    });
-                                  } catch (error) {
-                                    console.error('Erro ao salvar URL do vídeo:', error);
-                                    toast({
-                                      title: "Erro",
-                                      description: "Não foi possível salvar a URL do vídeo",
-                                      variant: "destructive"
-                                    });
-                                  }
-                                }}
-                              >
-                                Salvar Vídeo
-                              </Button>
-                            </div>
-                            <p className="text-xs text-gray-500 mt-1">
-                              Este vídeo será exibido quando o visitante clicar no botão "Assistir Vídeo" na página principal.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      
                       {/* Hero Section Settings */}
                       <div>
                         <h3 className="text-lg font-medium mb-3">Seção de Destaque</h3>
@@ -2049,223 +2142,9 @@ const CRM = () => {
                         </div>
                       </div>
 
-                      {/* Sistema de Backup */}
-                      <div className="mt-8">
-                        <h3 className="text-lg font-medium mb-3">Sistema de Backup</h3>
-                        <Separator className="mb-4" />
-                        <div className="space-y-4">
-                          <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                            <h4 className="font-medium mb-2">Backup do Sistema</h4>
-                            <p className="text-sm text-gray-600 mb-4">
-                              Faça backup de todos os dados da clínica, incluindo clientes, funcionários, 
-                              consultas, configurações e imagens. O arquivo de backup pode ser salvo no 
-                              seu dispositivo para restauração futura.                              
-                            </p>
-                            <div className="flex gap-3">
-                              <Button 
-                                className="bg-pet-blue hover:bg-pet-blue/90 flex-1"
-                                onClick={() => {
-                                  // Criar objeto com todos os dados para backup
-                                  const backupData = {
-                                    timestamp: new Date().toISOString(),
-                                    version: "1.0",
-                                    clients,
-                                    staffMembers,
-                                    appointments,
-                                    // Obter configurações do localStorage
-                                    settings: localStorage.getItem('landingPageSettings') 
-                                      ? JSON.parse(localStorage.getItem('landingPageSettings') || '{}') 
-                                      : {},
-                                    // Obter imagens exportadas do localStorage
-                                    images: localStorage.getItem('exportedImages')
-                                      ? JSON.parse(localStorage.getItem('exportedImages') || '{}')
-                                      : {}
-                                  };
-                                  
-                                  // Converter para JSON
-                                  const backupJSON = JSON.stringify(backupData, null, 2);
-                                  
-                                  // Criar Blob
-                                  const blob = new Blob([backupJSON], { type: 'application/json' });
-                                  
-                                  // Criar URL para download
-                                  const url = URL.createObjectURL(blob);
-                                  
-                                  // Criar elemento de link para download
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `vet-oasis-backup-${new Date().toISOString().split('T')[0]}.json`;
-                                  
-                                  // Adicionar ao documento e clicar
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  
-                                  // Limpar
-                                  document.body.removeChild(a);
-                                  URL.revokeObjectURL(url);
-                                  
-                                  // Mostrar toast de sucesso
-                                  toast({
-                                    title: "Backup Criado",
-                                    description: "O arquivo de backup foi criado e está sendo baixado"
-                                  });
-                                }}
-                              >
-                                <Download className="mr-2 h-4 w-4" />
-                                Fazer Backup Completo
-                              </Button>
-                              
-                              <label className="flex items-center justify-center gap-2 cursor-pointer bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-md transition-colors">
-                                <Upload className="h-4 w-4" />
-                                Restaurar Backup
-                                <input 
-                                  type="file" 
-                                  accept=".json" 
-                                  className="hidden" 
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onload = (event) => {
-                                        try {
-                                          const backupData = JSON.parse(event.target?.result as string);
-                                          
-                                          // Verificar versão do backup
-                                          if (!backupData.version) {
-                                            throw new Error("Formato de backup inválido");
-                                          }
-                                          
-                                          // Restaurar dados
-                                          if (backupData.clients) setClients(backupData.clients);
-                                          if (backupData.staffMembers) setStaffMembers(backupData.staffMembers);
-                                          if (backupData.appointments) setAppointments(backupData.appointments);
-                                          
-                                          // Restaurar configurações
-                                          if (backupData.settings) {
-                                            localStorage.setItem('landingPageSettings', JSON.stringify(backupData.settings));
-                                            
-                                            // Atualizar estados com as configurações restauradas
-                                            if (backupData.settings.heroTitle) setHeroTitle(backupData.settings.heroTitle);
-                                            if (backupData.settings.heroDescription) setHeroDescription(backupData.settings.heroDescription);
-                                            if (backupData.settings.videoUrl) setVideoUrl(backupData.settings.videoUrl);
-                                            if (backupData.settings.logoUrl) setLogoUrl(backupData.settings.logoUrl);
-                                            if (backupData.settings.logoWidth) setLogoWidth(backupData.settings.logoWidth);
-                                            if (backupData.settings.logoHorizontalOffset) setLogoHorizontalOffset(backupData.settings.logoHorizontalOffset);
-                                          }
-                                          
-                                          // Restaurar imagens
-                                          if (backupData.images) {
-                                            localStorage.setItem('exportedImages', JSON.stringify(backupData.images));
-                                          }
-                                          
-                                          // Mostrar toast de sucesso
-                                          toast({
-                                            title: "Backup Restaurado",
-                                            description: "Todos os dados foram restaurados com sucesso"
-                                          });
-                                          
-                                        } catch (error) {
-                                          console.error('Erro ao restaurar backup:', error);
-                                          toast({
-                                            title: "Erro na Restauração",
-                                            description: "O arquivo de backup parece estar corrompido ou em formato inválido",
-                                            variant: "destructive"
-                                          });
-                                        }
-                                      };
-                                      reader.readAsText(file);
-                                    }
-                                  }}
-                                />
-                              </label>
-                            </div>
-                          </div>
-                          
-                          <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                            <h4 className="font-medium mb-2">Exportar Dados Específicos</h4>
-                            <div className="grid grid-cols-3 gap-2 mt-3">
-                              <Button 
-                                variant="outline" 
-                                className="text-xs"
-                                onClick={() => {
-                                  // Exportar apenas clientes
-                                  const clientsData = JSON.stringify(clients, null, 2);
-                                  const blob = new Blob([clientsData], { type: 'application/json' });
-                                  const url = URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `clientes-${new Date().toISOString().split('T')[0]}.json`;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  document.body.removeChild(a);
-                                  URL.revokeObjectURL(url);
-                                  
-                                  toast({
-                                    title: "Clientes Exportados",
-                                    description: "A lista de clientes foi exportada com sucesso"
-                                  });
-                                }}
-                              >
-                                Exportar Clientes
-                              </Button>
-                              
-                              <Button 
-                                variant="outline" 
-                                className="text-xs"
-                                onClick={() => {
-                                  // Exportar apenas funcionários
-                                  const staffData = JSON.stringify(staffMembers, null, 2);
-                                  const blob = new Blob([staffData], { type: 'application/json' });
-                                  const url = URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `funcionarios-${new Date().toISOString().split('T')[0]}.json`;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  document.body.removeChild(a);
-                                  URL.revokeObjectURL(url);
-                                  
-                                  toast({
-                                    title: "Funcionários Exportados",
-                                    description: "A lista de funcionários foi exportada com sucesso"
-                                  });
-                                }}
-                              >
-                                Exportar Funcionários
-                              </Button>
-                              
-                              <Button 
-                                variant="outline" 
-                                className="text-xs"
-                                onClick={() => {
-                                  // Exportar apenas consultas
-                                  const appointmentsData = JSON.stringify(appointments, null, 2);
-                                  const blob = new Blob([appointmentsData], { type: 'application/json' });
-                                  const url = URL.createObjectURL(blob);
-                                  const a = document.createElement('a');
-                                  a.href = url;
-                                  a.download = `consultas-${new Date().toISOString().split('T')[0]}.json`;
-                                  document.body.appendChild(a);
-                                  a.click();
-                                  document.body.removeChild(a);
-                                  URL.revokeObjectURL(url);
-                                  
-                                  toast({
-                                    title: "Consultas Exportadas",
-                                    description: "A lista de consultas foi exportada com sucesso"
-                                  });
-                                }}
-                              >
-                                Exportar Consultas
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                      
                       <Button 
                         onClick={saveSettings} 
-                        className="bg-pet-green hover:bg-pet-green/90 w-full mt-6"
+                        className="bg-pet-green hover:bg-pet-green/90 w-full"
                       >
                         Salvar Configurações
                       </Button>
