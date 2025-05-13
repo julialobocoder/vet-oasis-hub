@@ -6,6 +6,7 @@ import ServiceCard from '@/components/ServiceCard';
 import StatsCard from '@/components/StatsCard';
 import { Play } from 'lucide-react';
 import { retrieveImage } from '@/utils/imageStorage';
+import VideoDialog from '@/components/VideoDialog';
 
 // Definindo tipos para garantir que as cores sejam apenas as permitidas
 type ServiceColor = "orange" | "blue" | "green" | "purple";
@@ -62,6 +63,8 @@ const Index = () => {
   const [aboutDescription2, setAboutDescription2] = useState(defaultAboutDescription2);
   const [services, setServices] = useState<Service[]>(defaultServices);
   const [stats, setStats] = useState<Stat[]>(defaultStats);
+  const [videoUrl, setVideoUrl] = useState("");
+  const [showVideoDialog, setShowVideoDialog] = useState(false);
   
   // Load settings from localStorage
   useEffect(() => {
@@ -73,6 +76,11 @@ const Index = () => {
           
           setHeroTitle(parsedSettings.heroTitle || defaultHeroTitle);
           setHeroDescription(parsedSettings.heroDescription || defaultHeroDescription);
+          
+          // Carregar a URL do vídeo
+          if (parsedSettings.videoUrl) {
+            setVideoUrl(parsedSettings.videoUrl);
+          }
           
           // Carregar a imagem do herói
           if (parsedSettings.heroImageUrl) {
@@ -159,10 +167,21 @@ const Index = () => {
               {heroDescription}
             </p>
             <div className="flex gap-4 items-center">
-              <Button size="lg" className="bg-pet-orange hover:bg-pet-orange/90 rounded-full px-8">
+              <Button 
+                size="lg" 
+                className="bg-pet-orange hover:bg-pet-orange/90 rounded-full px-8"
+                onClick={() => {
+                  // Abrir WhatsApp com o número especificado
+                  window.open(`https://wa.me/5571994164434`, '_blank');
+                }}
+              >
                 Agendar Agora
               </Button>
-              <Button variant="ghost" className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                className="flex items-center gap-2"
+                onClick={() => setShowVideoDialog(true)}
+              >
                 <div className="bg-pet-orange text-white rounded-full p-2">
                   <Play size={16} />
                 </div>
@@ -298,6 +317,13 @@ const Index = () => {
           </div>
         </footer>
       </div>
+      
+      {/* Video Dialog */}
+      <VideoDialog 
+        open={showVideoDialog} 
+        onOpenChange={setShowVideoDialog} 
+        videoUrl={videoUrl} 
+      />
     </div>
   );
 };
