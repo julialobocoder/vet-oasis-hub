@@ -101,6 +101,7 @@ const CRM = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
   const [appointmentDate, setAppointmentDate] = useState<Date | undefined>(new Date());
+  const [videoUrl, setVideoUrl] = useState("");
   const [showAppointmentDialog, setShowAppointmentDialog] = useState(false);
   
   // Initialize the form with React Hook Form
@@ -440,6 +441,7 @@ const CRM = () => {
           const parsedSettings = JSON.parse(savedSettings);
           setHeroTitle(parsedSettings.heroTitle || heroTitle);
           setHeroDescription(parsedSettings.heroDescription || heroDescription);
+          setVideoUrl(parsedSettings.videoUrl || videoUrl);
           
           // Handle hero image - check if it's a database reference
           if (parsedSettings.heroImageUrl) {
@@ -1564,6 +1566,62 @@ const CRM = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-6">
+                      {/* Video Settings */}
+                      <div>
+                        <h3 className="text-lg font-medium mb-3">Vídeo Promocional</h3>
+                        <Separator className="mb-4" />
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium">URL do Vídeo</label>
+                            <div className="flex gap-2 mt-1">
+                              <Input 
+                                value={videoUrl} 
+                                onChange={(e) => setVideoUrl(e.target.value)}
+                                className="flex-1"
+                                placeholder="Cole aqui a URL do vídeo (YouTube, Vimeo, etc.)"
+                              />
+                              <Button 
+                                className="bg-pet-blue hover:bg-pet-blue/90"
+                                onClick={() => {
+                                  // Salvar a URL do vídeo no localStorage
+                                  try {
+                                    const currentSettings = localStorage.getItem('landingPageSettings');
+                                    const parsedSettings = currentSettings ? JSON.parse(currentSettings) : {};
+                                    
+                                    // Atualizar as configurações com a URL do vídeo
+                                    const updatedSettings = {
+                                      ...parsedSettings,
+                                      videoUrl: videoUrl
+                                    };
+                                    
+                                    // Salvar as configurações atualizadas
+                                    localStorage.setItem('landingPageSettings', JSON.stringify(updatedSettings));
+                                    
+                                    // Mostrar toast de sucesso
+                                    toast({
+                                      title: "Vídeo Configurado",
+                                      description: "A URL do vídeo foi salva com sucesso"
+                                    });
+                                  } catch (error) {
+                                    console.error('Erro ao salvar URL do vídeo:', error);
+                                    toast({
+                                      title: "Erro",
+                                      description: "Não foi possível salvar a URL do vídeo",
+                                      variant: "destructive"
+                                    });
+                                  }
+                                }}
+                              >
+                                Salvar Vídeo
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                              Este vídeo será exibido quando o visitante clicar no botão "Assistir Vídeo" na página principal.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
                       {/* Hero Section Settings */}
                       <div>
                         <h3 className="text-lg font-medium mb-3">Seção de Destaque</h3>
